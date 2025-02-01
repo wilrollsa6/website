@@ -54,6 +54,15 @@
         th {
             background-color: #f4f4f4;
         }
+        .form-container {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            box-sizing: border-box;
+            width: 300px;
+        }
     </style>
 </head>
 <body>
@@ -86,6 +95,17 @@
                 <!-- Data rows will be populated here by JavaScript -->
             </tbody>
         </table>
+    </div>
+
+    <div class="form-container">
+        <h3>Add Roll for Next Day</h3>
+        <form id="rollForm">
+            <label for="date">Date:</label><br>
+            <input type="date" id="date" name="date" required><br><br>
+            <label for="roll">Dice Roll:</label><br>
+            <input type="number" id="roll" name="roll" min="1" max="6" required><br><br>
+            <input type="submit" value="Add Roll">
+        </form>
     </div>
 
     <script>
@@ -157,6 +177,7 @@
             for (const date of sortedDates) {
                 const formattedDate = formatDate(new Date(date));
                 const weekday = getWeekday(date);
+                console.log(`Adding row: ${formattedDate}, ${weekday}, 1, 6, ${rollData[date]}`);
                 addRow(formattedDate, weekday, 1, 6, rollData[date]);
             }
 
@@ -172,12 +193,31 @@
             // Add today's and tomorrow's rolls to the table if they are not already present
             if (todayRoll !== 'Roll / Update Incoming') {
                 const todayWeekday = getWeekday(today);
+                console.log(`Adding today's roll: ${todayDate}, ${todayWeekday}, 1, 6, ${todayRoll}`);
                 addRow(todayDate, todayWeekday, 1, 6, todayRoll);
             }
             if (tomorrowRoll !== 'Roll / Update Incoming') {
                 const tomorrowWeekday = getWeekday(new Date(today.getTime() + 24 * 60 * 60 * 1000));
+                console.log(`Adding tomorrow's roll: ${tomorrowDate}, ${tomorrowWeekday}, 1, 6, ${tomorrowRoll}`);
                 addRow(tomorrowDate, tomorrowWeekday, 1, 6, tomorrowRoll);
             }
+        }
 
-            // Check for new roll in localStorage
-            const newRoll = JSON.parse(localStorage.getItem('newRoll'));
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const dateInput = document.getElementById('date').value;
+            const rollInput = document.getElementById('roll').value;
+
+            if (dateInput && rollInput) {
+                const formattedDate = formatDate(new Date(dateInput));
+                const weekday = getWeekday(dateInput);
+                addRow(formattedDate, weekday, 1, 6, rollInput);
+                document.getElementById('rollForm').reset();
+            }
+        }
+
+        document.getElementById('rollForm').addEventListener('submit', handleFormSubmit);
+        window.onload = populateData;
+    </script>
+</body>
+</html>
