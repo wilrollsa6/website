@@ -116,7 +116,7 @@
             const today = new Date();
             const startDate = new Date('2025-01-18');
 
-            // Predefined dice roll data in m/d/yy format
+            // Predefined dice roll data in m/d/yy format, ordered from newest to oldest
             const rollData = {
                 '2/1/25': 5,
                 '1/31/25': 3,
@@ -136,8 +136,9 @@
             };
 
             // Populate the table with predefined data
-            for (const [date, roll] of Object.entries(rollData)) {
-                addRow(date, 6, roll);
+            const sortedDates = Object.keys(rollData).sort((a, b) => new Date(b) - new Date(a));
+            for (const date of sortedDates) {
+                addRow(date, 6, rollData[date]);
             }
 
             // Retrieve today's and tomorrow's rolls
