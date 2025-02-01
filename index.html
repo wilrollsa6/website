@@ -178,9 +178,6 @@
                 const tomorrowWeekday = getWeekday(new Date(today.getTime() + 24 * 60 * 60 * 1000));
                 addRow(tomorrowDate, tomorrowWeekday, 1, 6, tomorrowRoll);
             }
-        }
 
-        window.onload = populateData;
-    </script>
-</body>
-</html>
+            // Check for new roll in localStorage
+            const newRoll = JSON.parse(localStorage.getItem('newRoll'));
