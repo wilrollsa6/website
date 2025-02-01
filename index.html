@@ -22,12 +22,13 @@
         .flex-container {
             width: 100%;
             display: flex;
-            justify-content: space-between;
+            justify-content: center; /* Center the containers */
+            gap: 20px; /* Add gap between the containers */
             padding: 0 20px;
             box-sizing: border-box;
         }
         .container {
-            flex: 1;
+            flex: 0 0 auto; /* Prevent containers from stretching */
             margin: 20px;
             padding: 20px;
             border: 1px solid #ccc;
