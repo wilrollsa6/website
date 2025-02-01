@@ -142,7 +142,7 @@
             const todayDate = formatDate(today);
             const tomorrowDate = formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000));
             const todayRoll = rollData[todayDate] !== undefined ? rollData[todayDate] : 'Roll / Update Incoming';
-            const tomorrowRoll = rollData[tomorrowDate] !== undefined ? rollData[tomorrowDate] : '<i>Roll Incoming</i>';
+            const tomorrowRoll = rollData[tomorrowDate] !== undefined ? rollData[tomorrowDate] : 'Roll Incoming';
 
             document.getElementById('todayRoll').textContent = `${todayRoll}`;
             document.getElementById('tomorrowRoll').textContent = `${tomorrowRoll}`;
