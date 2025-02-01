@@ -86,9 +86,11 @@
     </div>
 
     <script>
-
         function formatDate(date) {
-            return date.toISOString().split('T')[0];
+            const day = date.getDate();
+            const month = date.getMonth() + 1; // Months are zero-based
+            const year = date.getFullYear().toString().slice(-2); // Get last two digits of the year
+            return `${day}/${month}/${year}`;
         }
 
         function addRow(date, sides, roll) {
@@ -114,23 +116,23 @@
             const today = new Date();
             const startDate = new Date('2025-01-18');
 
-            // Predefined dice roll data
+            // Predefined dice roll data in d/m/yy format
             const rollData = {
-                '2025-02-01': 5,
-                '2025-01-31': 3,
-                '2025-01-30': 4,
-                '2025-01-29': 2,
-                '2025-01-28': 5,
-                '2025-01-27': 3,
-                '2025-01-26': 3,
-                '2025-01-25': 2,
-                '2025-01-24': 3,
-                '2025-01-23': 5,
-                '2025-01-22': 3,
-                '2025-01-21': 6,
-                '2025-01-20': 3,
-                '2025-01-19': 4,
-                '2025-01-18': 6,
+                '1/2/25': 5,
+                '31/1/25': 3,
+                '30/1/25': 4,
+                '29/1/25': 2,
+                '28/1/25': 5,
+                '27/1/25': 3,
+                '26/1/25': 3,
+                '25/1/25': 2,
+                '24/1/25': 3,
+                '23/1/25': 5,
+                '22/1/25': 3,
+                '21/1/25': 6,
+                '20/1/25': 3,
+                '19/1/25': 4,
+                '18/1/25': 6,
             };
 
             // Populate the table with predefined data
@@ -142,7 +144,7 @@
             const todayDate = formatDate(today);
             const tomorrowDate = formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000));
             const todayRoll = rollData[todayDate] !== undefined ? rollData[todayDate] : 'Roll / Update Incoming';
-            const tomorrowRoll = rollData[tomorrowDate] !== undefined ? rollData[tomorrowDate] : 'Roll Incoming';
+            const tomorrowRoll = rollData[tomorrowDate] !== undefined ? rollData[tomorrowDate] : 'Roll / Update Incoming';
 
             document.getElementById('todayRoll').textContent = `${todayRoll}`;
             document.getElementById('tomorrowRoll').textContent = `${tomorrowRoll}`;
