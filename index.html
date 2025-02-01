@@ -54,15 +54,6 @@
         th {
             background-color: #f4f4f4;
         }
-        .form-container {
-            margin: 20px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #fff;
-            box-sizing: border-box;
-            width: 300px;
-        }
     </style>
 </head>
 <body>
@@ -95,17 +86,6 @@
                 <!-- Data rows will be populated here by JavaScript -->
             </tbody>
         </table>
-    </div>
-
-    <div class="form-container">
-        <h3>Add Roll for Next Day</h3>
-        <form id="rollForm">
-            <label for="date">Date:</label><br>
-            <input type="date" id="date" name="date" required><br><br>
-            <label for="roll">Dice Roll:</label><br>
-            <input type="number" id="roll" name="roll" min="1" max="6" required><br><br>
-            <input type="submit" value="Add Roll">
-        </form>
     </div>
 
     <script>
@@ -201,22 +181,18 @@
                 console.log(`Adding tomorrow's roll: ${tomorrowDate}, ${tomorrowWeekday}, 1, 6, ${tomorrowRoll}`);
                 addRow(tomorrowDate, tomorrowWeekday, 1, 6, tomorrowRoll);
             }
-        }
 
-        function handleFormSubmit(event) {
-            event.preventDefault();
-            const dateInput = document.getElementById('date').value;
-            const rollInput = document.getElementById('roll').value;
-
-            if (dateInput && rollInput) {
-                const formattedDate = formatDate(new Date(dateInput));
-                const weekday = getWeekday(dateInput);
-                addRow(formattedDate, weekday, 1, 6, rollInput);
-                document.getElementById('rollForm').reset();
+            // Check for new roll in localStorage
+            const newRoll = JSON.parse(localStorage.getItem('newRoll'));
+            if (newRoll) {
+                const newFormattedDate = formatDate(new Date(newRoll.date));
+                const newWeekday = getWeekday(newRoll.date);
+                console.log(`Adding new roll from localStorage: ${newFormattedDate}, ${newWeekday}, 1, 6, ${newRoll.roll}`);
+                addRow(newFormattedDate, newWeekday, 1, 6, newRoll.roll);
+                localStorage.removeItem('newRoll'); // Clear the new roll after adding it
             }
         }
 
-        document.getElementById('rollForm').addEventListener('submit', handleFormSubmit);
         window.onload = populateData;
     </script>
 </body>
