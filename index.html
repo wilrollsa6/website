@@ -53,10 +53,39 @@
         th {
             background-color: #f4f4f4;
         }
+        #stats-icon {
+            cursor: pointer;
+            margin: 20px;
+            font-size: 24px;
+        }
+        #stats-section {
+            display: none;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            margin: 20px 0;
+        }
+        .highlight {
+            background-color: #d3d3d3;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="title">The Rolling Runners</div>
+
+    <div id="stats-icon" onclick="toggleStatsSection()">📊 Show Stats</div>
+
+    <div id="stats-section">
+        <div class="header">Stats</div>
+        <div class="container">
+            <div class="header">Rolled Number</div>
+            <div id="rolledNumber"></div>
+        </div>
+    </div>
 
     <div class="flex-container">
         <div class="container">
@@ -112,6 +141,20 @@
             tbody.appendChild(row);
         }
 
+        function toggleStatsSection() {
+            const statsSection = document.getElementById('stats-section');
+            const statsIcon = document.getElementById('stats-icon');
+            if (statsSection.style.display === 'none' || statsSection.style.display === '') {
+                statsSection.style.display = 'block';
+                statsIcon.classList.add('highlight');
+                statsIcon.textContent = '📊 Hide Stats';
+            } else {
+                statsSection.style.display = 'none';
+                statsIcon.classList.remove('highlight');
+                statsIcon.textContent = '📊 Show Stats';
+            }
+        }
+
         function populateData() {
             const today = new Date();
             const startDate = new Date('2025-01-18');
@@ -156,6 +199,9 @@
             if (tomorrowRoll !== 'Roll / Update Incoming') {
                 addRow(tomorrowDate, 6, tomorrowRoll);
             }
+
+            // Update stats section with today's rolled number
+            document.getElementById('rolledNumber').textContent = todayRoll;
         }
 
         window.onload = populateData;
