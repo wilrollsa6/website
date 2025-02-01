@@ -73,6 +73,8 @@
             border-radius: 5px;
         }
     </style>
+    <!-- Include Chart.js library from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="title">The Rolling Runners</div>
@@ -83,7 +85,7 @@
         <div class="header">Stats</div>
         <div class="container">
             <div class="header">Rolled Number</div>
-            <div id="rolledNumber"></div>
+            <canvas id="rollChart"></canvas> <!-- Canvas element for Chart.js -->
         </div>
     </div>
 
@@ -202,6 +204,35 @@
 
             // Update stats section with today's rolled number
             document.getElementById('rolledNumber').textContent = todayRoll;
+
+            // Generate chart data
+            const rollCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+            for (const roll of Object.values(rollData)) {
+                rollCounts[roll]++;
+            }
+
+            // Create bar chart using Chart.js
+            const ctx = document.getElementById('rollChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(rollCounts),
+                    datasets: [{
+                        label: 'Number of Times Rolled',
+                        data: Object.values(rollCounts),
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         }
 
         window.onload = populateData;
