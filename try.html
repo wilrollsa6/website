@@ -141,18 +141,22 @@
                 addRow(date, 6, roll);
             }
 
-            // Calculate today's and tomorrow's rolls
-            const todayRoll = getRandomDiceRoll(6);
-            const tomorrowRoll = getRandomDiceRoll(6);
+            // Retrieve today's and tomorrow's rolls
+            const todayDate = formatDate(today);
+            const tomorrowDate = formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000));
+            const todayRoll = rollData[todayDate] !== undefined ? rollData[todayDate] : 'Roll / Update Incoming';
+            const tomorrowRoll = rollData[tomorrowDate] !== undefined ? rollData[tomorrowDate] : 'Roll / Update Incoming';
 
             document.getElementById('todayRoll').textContent = `Rolled a ${todayRoll}`;
             document.getElementById('tomorrowRoll').textContent = `Rolled a ${tomorrowRoll}`;
 
-            // Add today's and tomorrow's rolls to the table
-            addRow(formatDate(today), 6, todayRoll);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
-            addRow(formatDate(tomorrow), 6, tomorrowRoll);
+            // Add today's and tomorrow's rolls to the table if they are not already present
+            if (todayRoll !== 'Roll / Update Incoming') {
+                addRow(todayDate, 6, todayRoll);
+            }
+            if (tomorrowRoll !== 'Roll / Update Incoming') {
+                addRow(tomorrowDate, 6, tomorrowRoll);
+            }
         }
 
         window.onload = populateData;
