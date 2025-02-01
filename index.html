@@ -135,7 +135,6 @@
 
             // Predefined dice roll data with number of dice and dice sides, ordered from newest to oldest
             const rollData = {
-'2/2/25': { numberOfDice: 1, sides: 6, roll: 2 },
                 '2/1/25': { numberOfDice: 1, sides: 6, roll: 5 },
                 '1/31/25': { numberOfDice: 1, sides: 6, roll: 3 },
                 '1/30/25': { numberOfDice: 1, sides: 6, roll: 4 },
@@ -166,35 +165,21 @@
             // Retrieve today's and tomorrow's rolls
             const todayDate = formatDate(today);
             const tomorrowDate = formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000));
-            const todayRoll = rollData[todayDate] !== undefined ? rollData[todayDate].roll : 'Roll / Update Incoming';
-            const tomorrowRoll = rollData[tomorrowDate] !== undefined ? rollData[tomorrowDate].roll : 'Roll / Update Incoming';
 
-            document.getElementById('todayRoll').textContent = `${todayRoll}`;
-            document.getElementById('tomorrowRoll').textContent = `${tomorrowRoll}`;
-
-            // Add today's and tomorrow's rolls to the table if they are not already present
-            if (todayRoll !== 'Roll / Update Incoming') {
-                const todayWeekday = getWeekday(today);
+            if (!rollData[todayDate]) {
+                const todayRoll = 'Roll / Update Incoming';
+                document.getElementById('todayRoll').textContent = `${todayRoll}`;
+            } else {
                 const { numberOfDice, sides, roll } = rollData[todayDate];
-                console.log(`Adding today's roll: ${todayDate}, ${todayWeekday}, ${numberOfDice}, ${sides}, ${roll}`);
-                addRow(todayDate, todayWeekday, numberOfDice, sides, roll);
-            }
-            if (tomorrowRoll !== 'Roll / Update Incoming') {
-                const tomorrowWeekday = getWeekday(new Date(today.getTime() + 24 * 60 * 60 * 1000));
-                const { numberOfDice, sides, roll } = rollData[tomorrowDate];
-                console.log(`Adding tomorrow's roll: ${tomorrowDate}, ${tomorrowWeekday}, ${numberOfDice}, ${sides}, ${roll}`);
-                addRow(tomorrowDate, tomorrowWeekday, numberOfDice, sides, roll);
+                document.getElementById('todayRoll').textContent = `${roll}`;
             }
 
-            // Check for new roll in localStorage
-            const newRoll = JSON.parse(localStorage.getItem('newRoll'));
-            if (newRoll) {
-                const newFormattedDate = formatDate(new Date(newRoll.date));
-                const newWeekday = getWeekday(newRoll.date);
-                const { numberOfDice, sides, roll } = newRoll;
-                console.log(`Adding new roll from localStorage: ${newFormattedDate}, ${newWeekday}, ${numberOfDice}, ${sides}, ${roll}`);
-                addRow(newFormattedDate, newWeekday, numberOfDice, sides, roll);
-                localStorage.removeItem('newRoll'); // Clear the new roll after adding it
+            if (!rollData[tomorrowDate]) {
+                const tomorrowRoll = 'Roll / Update Incoming';
+                document.getElementById('tomorrowRoll').textContent = `${tomorrowRoll}`;
+            } else {
+                const { numberOfDice, sides, roll } = rollData[tomorrowDate];
+                document.getElementById('tomorrowRoll').textContent = `${roll}`;
             }
         }
 
