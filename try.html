@@ -18,6 +18,10 @@
             font-size: 24px;
             margin-bottom: 10px;
         }
+        .flex-container {
+            display: flex;
+            justify-content: space-between;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -35,14 +39,16 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">Today's Roll</div>
-        <div id="todayRoll"></div>
-    </div>
+    <div class="flex-container">
+        <div class="container">
+            <div class="header">Today's Roll</div>
+            <div id="todayRoll"></div>
+        </div>
 
-    <div class="container">
-        <div class="header">Tomorrow's Roll</div>
-        <div id="tomorrowRoll"></div>
+        <div class="container">
+            <div class="header">Tomorrow's Roll</div>
+            <div id="tomorrowRoll"></div>
+        </div>
     </div>
 
     <div class="container">
@@ -90,16 +96,27 @@
 
         function populateData() {
             const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
+            const startDate = new Date('2025-01-18');
 
+            // Populate the table with data from 2025-01-18 to today
+            let currentDate = startDate;
+            while (currentDate <= today) {
+                const roll = getRandomDiceRoll(6);
+                addRow(formatDate(currentDate), 6, roll);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Calculate today's and tomorrow's rolls
             const todayRoll = getRandomDiceRoll(6);
             const tomorrowRoll = getRandomDiceRoll(6);
 
             document.getElementById('todayRoll').textContent = `Rolled a ${todayRoll}`;
             document.getElementById('tomorrowRoll').textContent = `Rolled a ${tomorrowRoll}`;
 
+            // Add today's and tomorrow's rolls to the table
             addRow(formatDate(today), 6, todayRoll);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
             addRow(formatDate(tomorrow), 6, tomorrowRoll);
         }
 
