@@ -54,10 +54,19 @@
         th {
             background-color: #f4f4f4;
         }
+        .hidden {
+            display: none;
+        }
+        .info-button {
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="title">The Rolling Runners</div>
+    <div class="info-button" onclick="toggleInfo()">More Info</div>
 
     <div class="flex-container">
         <div class="container">
@@ -77,9 +86,11 @@
                 <tr>
                     <th>Date</th>
                     <th>Weekday</th>
-                    <th>Number of Dice</th>
-                    <th>Dice Sides</th>
+                    <th class="info-column hidden">Number of Dice</th>
+                    <th class="info-column hidden">Dice Sides</th>
                     <th>Dice Roll</th>
+                    <th class="info-column hidden">Points</th>
+                    <th class="info-column hidden">Banked Miles</th>
                 </tr>
             </thead>
             <tbody id="dataRows">
@@ -89,6 +100,11 @@
     </div>
 
     <script>
+        function formatDateByMDY(date) {
+            const [month, day, year] = date.split('/');
+            return new Date(`20${year}`, month - 1, day);
+        }
+
         function formatDate(date) {
             const month = date.getMonth() + 1; // Months are zero-based
             const day = date.getDate();
@@ -116,15 +132,27 @@
 
             const numberOfDiceCell = document.createElement('td');
             numberOfDiceCell.textContent = numberOfDice;
+            numberOfDiceCell.classList.add('info-column', 'hidden');
             row.appendChild(numberOfDiceCell);
 
             const sidesCell = document.createElement('td');
             sidesCell.textContent = sides;
+            sidesCell.classList.add('info-column', 'hidden');
             row.appendChild(sidesCell);
 
             const rollCell = document.createElement('td');
             rollCell.textContent = roll;
             row.appendChild(rollCell);
+
+            const pointsCell = document.createElement('td');
+            pointsCell.textContent = sides * roll;
+            pointsCell.classList.add('info-column', 'hidden');
+            row.appendChild(pointsCell);
+
+            const bankedMilesCell = document.createElement('td');
+            bankedMilesCell.textContent = numberOfDice;
+            bankedMilesCell.classList.add('info-column', 'hidden');
+            row.appendChild(bankedMilesCell);
 
             tbody.appendChild(row);
         }
@@ -154,8 +182,8 @@
 
             // Populate the table with data from the TXT
             rollData.forEach(({ date, numberOfDice, sides, roll }) => {
-                const formattedDate = formatDate(new Date(date));
-                const weekday = getWeekday(date);
+                const formattedDate = formatDate(formatDateByMDY(date));
+                const weekday = getWeekday(formatDateByMDY(date));
                 addRow(formattedDate, weekday, numberOfDice, sides, roll);
             });
 
@@ -168,6 +196,13 @@
 
             document.getElementById('todayRoll').textContent = `${todayRoll}`;
             document.getElementById('tomorrowRoll').textContent = `${tomorrowRoll}`;
+        }
+
+        function toggleInfo() {
+            const elements = document.querySelectorAll('.info-column');
+            elements.forEach(element => {
+                element.classList.toggle('hidden');
+            });
         }
 
         window.onload = populateData;
