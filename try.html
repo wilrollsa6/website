@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dice Roll Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .header {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Today's Roll</div>
+        <div id="todayRoll"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">Tomorrow's Roll</div>
+        <div id="tomorrowRoll"></div>
+    </div>
+
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Dice Sides</th>
+                    <th>Dice Roll</th>
+                </tr>
+            </thead>
+            <tbody id="dataRows">
+                <!-- Data rows will be populated here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function getRandomDiceRoll(sides) {
+            return Math.floor(Math.random() * sides) + 1;
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function addRow(date, sides, roll) {
+            const tbody = document.getElementById('dataRows');
+            const row = document.createElement('tr');
+
+            const dateCell = document.createElement('td');
+            dateCell.textContent = date;
+            row.appendChild(dateCell);
+
+            const sidesCell = document.createElement('td');
+            sidesCell.textContent = sides;
+            row.appendChild(sidesCell);
+
+            const rollCell = document.createElement('td');
+            rollCell.textContent = roll;
+            row.appendChild(rollCell);
+
+            tbody.appendChild(row);
+        }
+
+        function populateData() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+
+            const todayRoll = getRandomDiceRoll(6);
+            const tomorrowRoll = getRandomDiceRoll(6);
+
+            document.getElementById('todayRoll').textContent = `Rolled a ${todayRoll}`;
+            document.getElementById('tomorrowRoll').textContent = `Rolled a ${tomorrowRoll}`;
+
+            addRow(formatDate(today), 6, todayRoll);
+            addRow(formatDate(tomorrow), 6, tomorrowRoll);
+        }
+
+        window.onload = populateData;
+    </script>
+</body>
+</html>
