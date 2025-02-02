@@ -105,6 +105,7 @@
             const txtText = await response.text();
             return txtText;
         }
+
         function parseParticipants(txtText) {
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
@@ -119,6 +120,20 @@
                 };
             }).filter(participant => participant.Active);
         }
+
+        function parseIndexHTML(htmlText) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            const rows = doc.querySelectorAll('#dataRows tr');
+            const bankedMilesData = Array.from(rows).map(row => {
+                const cells = row.querySelectorAll('td');
+                const date = cells[0].textContent;
+                const bankedMiles = parseInt(cells[7].textContent);
+                return { date, bankedMiles };
+            });
+            return bankedMilesData;
+        }
+
         function calculateStreak(startDate, endDate) {
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
@@ -126,12 +141,28 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays;
         }
-        function displayParticipants(participants) {
+
+        function calculateBankedMiles(startDate, endDate, bankedMilesData) {
+            const start = new Date(startDate);
+            const end = endDate ? new Date(endDate) : new Date();
+            return bankedMilesData.reduce((total, { date, bankedMiles }) => {
+                const currentDate = new Date(date);
+                if (currentDate >= start && currentDate <= end) {
+                    return total + bankedMiles;
+                }
+                return total;
+            }, 0);
+        }
+
+        function displayParticipants(participants, bankedMilesData) {
             const participantCards = document.getElementById('participantCards');
             participantCards.innerHTML = '';
+
             participants.forEach(participant => {
                 const { DisplayName, StartDate, EndDate, Losses } = participant;
                 const streak = calculateStreak(StartDate, EndDate);
+                const bankedMiles = calculateBankedMiles(StartDate, EndDate, bankedMilesData);
+
                 const card = document.createElement('div');
                 card.classList.add('participant-card');
                 card.innerHTML = `
@@ -139,15 +170,22 @@
                     <p><strong>Start Date:</strong> ${StartDate}</p>
                     <p><strong>Streak:</strong> ${streak} days</p>
                     <p><strong>Number of Losses:</strong> ${Losses}</p>
+                    <p><strong>Banked Mileage:</strong> ${bankedMiles}</p>
                 `;
                 participantCards.appendChild(card);
             });
         }
+
         async function populateParticipants() {
-            const txtText = await fetchTXTData('participants.txt');
-            const participants = parseParticipants(txtText);
-            displayParticipants(participants);
+            const participantsText = await fetchTXTData('participants.txt');
+            const indexHtmlText = await fetchTXTData('index.html');
+
+            const participants = parseParticipants(participantsText);
+            const bankedMilesData = parseIndexHTML(indexHtmlText);
+
+            displayParticipants(participants, bankedMilesData);
         }
+
         window.onload = populateParticipants;
     </script>
 </body>
