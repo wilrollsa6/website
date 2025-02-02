@@ -75,15 +75,6 @@
         .participant-card h3 {
             margin: 0 0 10px 0;
         }
-        .border-green {
-            border-color: green;
-        }
-        .border-orange {
-            border-color: orange;
-        }
-        .border-red {
-            border-color: red;
-        }
     </style>
 </head>
 <body>
@@ -103,31 +94,18 @@
         <div class="info">
             <i>I'll update this more soon...</i>
         </div>
-
         <div class="participants">
             <h2 class="header">Participants</h2>
             <div id="participantCards">Loading participants...</div>
         </div>
     </div>
-
     <script>
         async function fetchTXTData(url) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-                }
-                const txtText = await response.text();
-                console.log(`Fetched data from ${url}:`, txtText);
-                return txtText;
-            } catch (error) {
-                console.error(error);
-                return null;
-            }
+            const response = await fetch(url);
+            const txtText = await response.text();
+            return txtText;
         }
-
         function parseParticipants(txtText) {
-            console.log('Parsing participants:', txtText);
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
                 const [ID, Active, DisplayName, StartDate, EndDate, Losses] = row.split(',').map(item => item.trim());
@@ -141,35 +119,6 @@
                 };
             }).filter(participant => participant.Active);
         }
-
-        function parseCoverage(txtText) {
-            console.log('Parsing coverage:', txtText);
-            const rows = txtText.trim().split('\n').slice(1); // Remove header row
-            return rows.map(row => {
-                const [Date, UserID, CoverageUsed, RepaymentMiles] = row.split(',').map(item => item.trim());
-                return { 
-                    Date: new Date(Date), 
-                    UserID, 
-                    CoverageUsed: parseInt(CoverageUsed) || 0, 
-                    RepaymentMiles: parseInt(RepaymentMiles) || 0
-                };
-            });
-        }
-
-        function parseRollData(txtText) {
-            console.log('Parsing roll data:', txtText);
-            const rows = txtText.trim().split('\n').slice(1); // Remove header row
-            return rows.map(row => {
-                const [Date, NumberOfDice, DiceSides, Roll] = row.split(';').map(item => item.trim());
-                return { 
-                    Date: new Date(Date), 
-                    NumberOfDice: parseInt(NumberOfDice), 
-                    DiceSides: parseInt(DiceSides), 
-                    Roll: parseInt(Roll)
-                };
-            });
-        }
-
         function calculateStreak(startDate, endDate) {
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
@@ -177,86 +126,28 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays;
         }
-
-        function calculateBankedMiles(participant, rollData, coverageData) {
-            const startDate = new Date(participant.StartDate);
-            const endDate = participant.EndDate ? new Date(participant.EndDate) : new Date();
-            let bankedMiles = 0;
-            let totalCoverageUsed = 0;
-            let totalRepaymentMiles = 0;
-            let repaymentStatus = 'green';
-
-            // Calculate banked miles
-            rollData.forEach(({ Date, Roll }) => {
-                if (Date >= startDate && Date <= endDate) {
-                    bankedMiles += Roll;
-                }
-            });
-
-            // Subtract coverage used and add repayment miles
-            coverageData.forEach(({ Date, UserID, CoverageUsed, RepaymentMiles }) => {
-                if (UserID === participant.ID && Date >= startDate && Date <= endDate) {
-                    bankedMiles -= CoverageUsed;
-                    totalCoverageUsed += CoverageUsed;
-                    totalRepaymentMiles += RepaymentMiles;
-
-                    const repaymentDeadline = new Date(Date.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    if (new Date() > repaymentDeadline && totalCoverageUsed > totalRepaymentMiles) {
-                        repaymentStatus = 'red';
-                    } else if (new Date() <= repaymentDeadline && totalCoverageUsed > totalRepaymentMiles) {
-                        repaymentStatus = 'orange';
-                    }
-                }
-            });
-
-            return { bankedMiles, repaymentStatus };
-        }
-
-        function displayParticipants(participants, rollData, coverageData) {
+        function displayParticipants(participants) {
             const participantCards = document.getElementById('participantCards');
             participantCards.innerHTML = '';
-
             participants.forEach(participant => {
                 const { DisplayName, StartDate, EndDate, Losses } = participant;
                 const streak = calculateStreak(StartDate, EndDate);
-                const { bankedMiles, repaymentStatus } = calculateBankedMiles(participant, rollData, coverageData);
-
                 const card = document.createElement('div');
-                card.classList.add('participant-card', `border-${repaymentStatus}`);
-
+                card.classList.add('participant-card');
                 card.innerHTML = `
                     <h3>${DisplayName}</h3>
                     <p><strong>Start Date:</strong> ${StartDate}</p>
                     <p><strong>Streak:</strong> ${streak} days</p>
                     <p><strong>Number of Losses:</strong> ${Losses}</p>
-                    <p><strong>Banked Mileage:</strong> ${bankedMiles}</p>
                 `;
-
                 participantCards.appendChild(card);
             });
         }
-
         async function populateParticipants() {
-            try {
-                const participantsText = await fetchTXTData('participants.txt');
-                const coverageText = await fetchTXTData('coverage.txt');
-                const rollDataText = await fetchTXTData('rollData.txt');
-
-                if (!participantsText || !coverageText || !rollDataText) {
-                    throw new Error('Failed to fetch one or more data files.');
-                }
-
-                const participants = parseParticipants(participantsText);
-                const coverageData = parseCoverage(coverageText);
-                const rollData = parseRollData(rollDataText);
-
-                displayParticipants(participants, rollData, coverageData);
-            } catch (error) {
-                console.error(error);
-                document.getElementById('participantCards').innerText = 'Failed to load participants.';
-            }
+            const txtText = await fetchTXTData('participants.txt');
+            const participants = parseParticipants(txtText);
+            displayParticipants(participants);
         }
-
         window.onload = populateParticipants;
     </script>
 </body>
