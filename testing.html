@@ -52,10 +52,13 @@
         .table-container {
             width: 100%;
             overflow-x: auto; /* Enable horizontal scrolling */
+            padding: 10px; /* Add padding around the table */
+            box-sizing: border-box;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            padding: 10px 20px; /* Will added some padding? */
         }
         table, th, td {
             border: 1px solid #ccc;
@@ -197,7 +200,7 @@
 
             const points = calculatePoints(sides, rolls);
             const pointsCell = document.createElement('td');
-            pointsCell.textContent = points.totalPoints;
+            pointsCell.textContent = points.totalPoints.toFixed(2);
             pointsCell.classList.add('info-column', 'hidden');
             row.appendChild(pointsCell);
 
@@ -294,16 +297,17 @@
         function updateCurrentPoints() {
             const pointsCells = document.querySelectorAll('td:nth-child(7)');
             let totalPoints = 0;
+            let totalBasePoints = 0;
             let totalStreakBonus = 0;
-            pointsCells.forEach(cell => {
-                totalPoints += parseFloat(cell.textContent);
-            });
 
-            // Calculate total streak bonus
-            const basePointsCells = document.querySelectorAll('td:nth-child(7)');
-            basePointsCells.forEach(cell => {
-                const basePoints = parseFloat(cell.textContent) / (1 + (streak * 0.05));
+            pointsCells.forEach(cell => {
+                const points = parseFloat(cell.textContent);
+                totalPoints += points;
+
+                // Calculate base points and streak bonus for the breakdown
+                const basePoints = points / (1 + (streak * 0.05));
                 const streakBonus = basePoints * (streak * 0.05);
+                totalBasePoints += basePoints;
                 totalStreakBonus += streakBonus;
             });
 
