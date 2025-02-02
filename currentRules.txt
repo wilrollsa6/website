@@ -1,6 +1,19 @@
 Level;Text
-1,This is a top-level rule
-2,This is a rule under a top-level rule.
-3,Hu
+1,Activity Completion
+2,Participants must complete activities with mileage totalling the sum of all rolled dice.
+2,Participants may take as many activities as are needed to complete the required mileage.
+1,Dice Selection / Rolling
+2,Dice may only be rolled after completion of current day's activity.
+2,Dice roll applies only to the next day's activity requirements.
+2,Each die may only be rolled once, until all dice that participant owns has already been rolled (see Dice Completion Bonus).
+2,Participants may select any available dice to roll.
+2,Each dice rolled banks one mile for future use (see Debt / Coverage)
 1,Wil is cool!
 3,Hi
+1,Debt / Coverage
+2,If a participant is unable to complete required mileage for a day, banked miles may removed from the bank and used to cover these miles.
+3,One mile must be completed in order to activate mileage coverage.
+2,Banked miles used to complete an activity must be re-paid within 7 days following the banked usage.
+2,Repayment is only accepted in the form of additional activity mileage in subsequent days - in addition to the required mileage for those days from normal Dice Rolling.
+1,Points
+2,Points are calculated by Σ_rolledDice[ (Dice Sidedness) * (Dice Roll) ]
