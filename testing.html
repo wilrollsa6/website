@@ -24,6 +24,10 @@
             font-size: 16px;
             margin-bottom: 10px;
         }
+        .info-selected {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
         .flex-container {
             width: 100%;
             display: flex;
@@ -74,16 +78,24 @@
             display: none;
         }
         .sort-asc::after {
-            content: ' ↑'; /* Up arrow */
+            content: ' ↓'; /* Down arrow */
         }
         .sort-desc::after {
-            content: ' ↓'; /* Down arrow */
+            content: ' ↑'; /* Up arrow */
+        }
+        .more-info-icon {
+            display: none;
+            font-size: 16px;
+            vertical-align: middle;
+        }
+        .info-selected .more-info-icon {
+            display: inline;
         }
     </style>
 </head>
 <body>
     <div class="title">The Rolling Runners</div>
-    <div class="info-button" onclick="toggleInfo()">More Info</div>
+    <div class="info-button" onclick="toggleInfo()">More Info <span class="more-info-icon">📊</span></div>
 
     <div class="flex-container">
         <div class="container">
@@ -223,6 +235,7 @@
             elements.forEach(element => {
                 element.classList.toggle('hidden');
             });
+            document.querySelector('.info-button').classList.toggle('info-selected');
         }
 
         function sortTable(columnIndex) {
