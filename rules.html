@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Rolling Runners - Rules</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff; /* Pleasant background color */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-item {
+            padding: 10px 20px;
+            background-color: #444;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .nav-item:hover {
+            background-color: #555;
+        }
+        .title {
+            font-size: 36px;
+            color: #fff;
+        }
+        .content-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .rule {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .rule-level-1 {
+            font-weight: bold;
+            background-color: #e6f7ff;
+        }
+        .rule-level-2 {
+            margin-left: 20px;
+        }
+        .rule-level-3 {
+            margin-left: 40px;
+        }
+        /* Add more levels as needed */
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-container">
+            <div class="nav-item" onclick="location.href='index.html'">Home</div>
+        </div>
+        <div class="title">The Rolling Runners</div>
+        <div class="nav-container">
+            <div class="nav-item" onclick="location.href='contact.html'">Contact</div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <h2>Rules</h2>
+        <div id="rulesContainer">Loading rules...</div>
+    </div>
+
+    <script>
+        async function fetchTXTData(url) {
+            const response = await fetch(url);
+            const txtText = await response.text();
+            return txtText;
+        }
+
+        function parseTXT(txtText) {
+            const rows = txtText.trim().split('\n').slice(1); // Remove header row
+            return rows.map(row => {
+                const [level, text] = row.split(';');
+                return { 
+                    level: parseInt(level), 
+                    text: text.trim()
+                };
+            });
+        }
+
+        function displayRules(rules) {
+            const rulesContainer = document.getElementById('rulesContainer');
+            rulesContainer.innerHTML = '';
+
+            rules.forEach(rule => {
+                const ruleDiv = document.createElement('div');
+                ruleDiv.classList.add('rule');
+                ruleDiv.classList.add(`rule-level-${rule.level}`);
+                ruleDiv.textContent = rule.text;
+                rulesContainer.appendChild(ruleDiv);
+            });
+        }
+
+        async function populateRules() {
+            const txtText = await fetchTXTData('currentRules.txt');
+            const rules = parseTXT(txtText);
+            displayRules(rules);
+        }
+
+        window.onload = populateRules;
+    </script>
+</body>
+</html>
