@@ -94,7 +94,7 @@
         function parseTXT(txtText) {
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
-                const [level, text] = row.split(';');
+                const [level, text] = row.split(',');
                 return { 
                     level: parseInt(level), 
                     text: text.trim()
