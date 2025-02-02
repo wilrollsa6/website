@@ -114,8 +114,8 @@
                     ID, 
                     Active: Active === "1", 
                     DisplayName, 
-                    StartDate, 
-                    EndDate: EndDate || null, // Handle empty EndDate
+                    StartDate: convertDateToISO(StartDate), 
+                    EndDate: EndDate ? convertDateToISO(EndDate) : null, // Handle empty EndDate
                     Losses: parseInt(Losses) || 0
                 };
             }).filter(participant => participant.Active);
@@ -127,12 +127,17 @@
             const rows = doc.querySelectorAll('#dataRows tr');
             const bankedMilesData = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
-                const date = cells[0].textContent;
+                const date = convertDateToISO(cells[0].textContent);
                 const bankedMiles = parseInt(cells[7].textContent);
                 return { date, bankedMiles };
             });
             console.log('Parsed banked miles data:', bankedMilesData); // Add logging
             return bankedMilesData;
+        }
+
+        function convertDateToISO(dateStr) {
+            const [month, day, year] = dateStr.split('/');
+            return new Date(`20${year}-${month}-${day}`).toISOString().split('T')[0];
         }
 
         function calculateStreak(startDate, endDate) {
