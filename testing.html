@@ -63,24 +63,24 @@
             cursor: pointer; /* Add cursor pointer to headers for sorting */
         }
         th {
-            background-color: #e0e0e0; /* Slightly darker background for headers */
+            background-color: #d0d0d0; /* Slightly darker background for default shown headers */
         }
         td {
-            background-color: #f9f9f9; /* Default background for table cells */
+            background-color: #e0e0e0; /* Slightly darker background for default shown cells */
         }
         .info-column.hidden {
             background-color: #f0f8ff; /* Lighter background for hidden columns */
         }
         .info-column {
-            background-color: #f1f1f1; /* Slightly darker background for info columns */
+            background-color: #f1f1f1; /* Slightly lighter background for info columns */
         }
         .hidden {
             display: none;
         }
-        .sort-asc::after {
+        .sort-desc::after {
             content: ' ↓'; /* Down arrow */
         }
-        .sort-desc::after {
+        .sort-asc::after {
             content: ' ↑'; /* Up arrow */
         }
         .more-info-icon {
