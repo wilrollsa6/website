@@ -145,9 +145,7 @@
     <script>
         let sortOrder = [true, true, true, true, true, true, true, true];
         let currentSortColumn = -1;
-        let streak = 0;
-        let lastPlayDate = null;
-
+        
         function formatDateByMDY(date) {
             const [month, day, year] = date.split('/');
             return new Date(`20${year}`, month - 1, day);
@@ -200,7 +198,7 @@
 
             const points = calculatePoints(sides, rolls);
             const pointsCell = document.createElement('td');
-            pointsCell.textContent = points.totalPoints.toFixed(2);
+            pointsCell.textContent = points.toFixed(2);
             pointsCell.classList.add('info-column', 'hidden');
             row.appendChild(pointsCell);
 
@@ -217,16 +215,7 @@
         }
 
         function calculatePoints(sides, rolls) {
-            let basePoints = rolls.reduce((acc, roll, index) => acc + (sides[index] * roll), 0);
-            let streakBonus = 0;
-
-            // Apply streak bonus
-            if (streak > 1) {
-                streakBonus = basePoints * (streak * 0.05); // 5% bonus for each consecutive day
-            }
-
-            const totalPoints = basePoints + streakBonus;
-            return { basePoints, streakBonus, totalPoints };
+            return rolls.reduce((acc, roll, index) => acc + (sides[index] * roll), 0);
         }
 
         async function fetchTXTData(url) {
@@ -267,7 +256,6 @@
                 const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
                 if (formattedDate === todayDate) {
                     todayTotalMileage += totalMileage;
-                    updateStreak(date);
                 } else if (formattedDate === tomorrowDate) {
                     tomorrowTotalMileage += totalMileage;
                 }
@@ -278,41 +266,16 @@
             updateCurrentPoints();
         }
 
-        function updateStreak(currentDate) {
-            const today = new Date();
-            const current = formatDateByMDY(currentDate);
-            if (lastPlayDate) {
-                const differenceInDays = (current - formatDateByMDY(lastPlayDate)) / (1000 * 60 * 60 * 24);
-                if (differenceInDays === 1) {
-                    streak += 1;
-                } else if (differenceInDays > 1) {
-                    streak = 1;
-                }
-            } else {
-                streak = 1;
-            }
-            lastPlayDate = currentDate;
-        }
-
         function updateCurrentPoints() {
             const pointsCells = document.querySelectorAll('td:nth-child(7)');
             let totalPoints = 0;
-            let totalBasePoints = 0;
-            let totalStreakBonus = 0;
 
             pointsCells.forEach(cell => {
-                const points = parseFloat(cell.textContent);
-                totalPoints += points;
-
-                // Calculate base points and streak bonus for the breakdown
-                const basePoints = points / (1 + (streak * 0.05));
-                const streakBonus = basePoints * (streak * 0.05);
-                totalBasePoints += basePoints;
-                totalStreakBonus += streakBonus;
+                totalPoints += parseFloat(cell.textContent);
             });
 
             document.getElementById('currentPoints').textContent = totalPoints.toFixed(2);
-            document.getElementById('pointsBreakdown').textContent = `(Dice Sides * Dice Roll) + ${totalStreakBonus.toFixed(2)} (5% Streak Bonus)`;
+            document.getElementById('pointsBreakdown').textContent = `(Dice Sides * Dice Roll)`;
         }
 
         function toggleInfo() {
