@@ -59,12 +59,16 @@
         .rule-level-1 {
             font-weight: bold;
             background-color: #e6f7ff;
+            cursor: pointer;
         }
         .rule-level-2 {
             margin-left: 20px;
         }
         .rule-level-3 {
             margin-left: 40px;
+        }
+        .hidden {
+            display: none;
         }
         /* Add more levels as needed */
     </style>
@@ -107,13 +111,43 @@
             const rulesContainer = document.getElementById('rulesContainer');
             rulesContainer.innerHTML = '';
 
-            rules.forEach(rule => {
+            rules.forEach((rule, index) => {
                 const ruleDiv = document.createElement('div');
                 ruleDiv.classList.add('rule');
                 ruleDiv.classList.add(`rule-level-${rule.level}`);
                 ruleDiv.textContent = rule.text;
+
+                if (rule.level === 1) {
+                    ruleDiv.addEventListener('click', () => toggleVisibility(index, rules));
+                }
+
                 rulesContainer.appendChild(ruleDiv);
             });
+        }
+
+        function toggleVisibility(startIndex, rules) {
+            const rulesContainer = document.getElementById('rulesContainer');
+            let isHidden = false;
+
+            for (let i = startIndex + 1; i < rules.length; i++) {
+                if (rules[i].level === 1) break;
+
+                const ruleDiv = rulesContainer.children[i];
+                if (ruleDiv.classList.contains('hidden')) {
+                    ruleDiv.classList.remove('hidden');
+                    isHidden = false;
+                } else {
+                    ruleDiv.classList.add('hidden');
+                    isHidden = true;
+                }
+            }
+
+            if (!isHidden) {
+                for (let i = startIndex + 1; i < rules.length; i++) {
+                    if (rules[i].level === 1) break;
+                    rulesContainer.children[i].classList.remove('hidden');
+                }
+            }
         }
 
         async function populateRules() {
