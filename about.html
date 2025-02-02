@@ -61,6 +61,20 @@
             border-radius: 5px;
             background-color: #fff;
         }
+        .participants {
+            margin: 20px 0;
+        }
+        .participant-card {
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            text-align: left;
+        }
+        .participant-card h3 {
+            margin: 0 0 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -80,6 +94,72 @@
         <div class="info">
             <i>I'll update this more soon...</i>
         </div>
+
+        <div class="participants">
+            <h2 class="header">Participants</h2>
+            <div id="participantCards">Loading participants...</div>
+        </div>
     </div>
+
+    <script>
+        async function fetchTXTData(url) {
+            const response = await fetch(url);
+            const txtText = await response.text();
+            return txtText;
+        }
+
+        function parseParticipants(txtText) {
+            const rows = txtText.trim().split('\n').slice(1); // Remove header row
+            return rows.map(row => {
+                const [ID, Active, DisplayName, StartDate, EndDate, Losses] = row.split(',').map(item => item.trim());
+                return { 
+                    ID, 
+                    Active: Active === "1", 
+                    DisplayName, 
+                    StartDate, 
+                    EndDate, 
+                    Losses: parseInt(Losses) || 0
+                };
+            }).filter(participant => participant.Active);
+        }
+
+        function calculateStreak(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = endDate ? new Date(endDate) : new Date();
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        function displayParticipants(participants) {
+            const participantCards = document.getElementById('participantCards');
+            participantCards.innerHTML = '';
+
+            participants.forEach(participant => {
+                const { DisplayName, StartDate, EndDate, Losses } = participant;
+                const streak = calculateStreak(StartDate, EndDate);
+
+                const card = document.createElement('div');
+                card.classList.add('participant-card');
+
+                card.innerHTML = `
+                    <h3>${DisplayName}</h3>
+                    <p><strong>Start Date:</strong> ${StartDate}</p>
+                    <p><strong>Streak:</strong> ${streak} days</p>
+                    <p><strong>Number of Losses:</strong> ${Losses}</p>
+                `;
+
+                participantCards.appendChild(card);
+            });
+        }
+
+        async function populateParticipants() {
+            const txtText = await fetchTXTData('participants.txt');
+            const participants = parseParticipants(txtText);
+            displayParticipants(participants);
+        }
+
+        window.onload = populateParticipants;
+    </script>
 </body>
 </html>
