@@ -115,7 +115,7 @@
                     Active: Active === "1", 
                     DisplayName, 
                     StartDate, 
-                    EndDate, 
+                    EndDate: EndDate || null, // Handle empty EndDate
                     Losses: parseInt(Losses) || 0
                 };
             }).filter(participant => participant.Active);
@@ -163,8 +163,9 @@
 
             participants.forEach(participant => {
                 const { DisplayName, StartDate, EndDate, Losses } = participant;
-                const streak = calculateStreak(StartDate, EndDate);
-                const bankedMiles = calculateBankedMiles(StartDate, EndDate, bankedMilesData);
+                const endDate = EndDate || new Date().toISOString().split('T')[0]; // Use today as end date if still active
+                const streak = calculateStreak(StartDate, endDate);
+                const bankedMiles = calculateBankedMiles(StartDate, endDate, bankedMilesData);
 
                 const card = document.createElement('div');
                 card.classList.add('participant-card');
