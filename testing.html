@@ -50,7 +50,7 @@
             margin-bottom: 10px;
         }
         .table-container {
-            width: 95%;
+            width: 100%;
             overflow-x: auto; /* Enable horizontal scrolling */
             padding: 10px; /* Add padding around the table */
             box-sizing: border-box;
@@ -105,17 +105,18 @@
     <div class="flex-container">
         <div class="container">
             <div class="header">Today's Mileage</div>
-            <div id="todayMileage"></div>
+            <div id="todayMileage">Pending Roll / Update</div>
         </div>
 
         <div class="container">
             <div class="header">Current Points</div>
             <div id="currentPoints"></div>
+            <div id="pointsBreakdown" class="hidden"></div>
         </div>
 
         <div class="container">
             <div class="header">Tomorrow's Mileage</div>
-            <div id="tomorrowMileage"></div>
+            <div id="tomorrowMileage">Pending Roll / Update</div>
         </div>
     </div>
 
@@ -246,6 +247,8 @@
 
             let todayTotalMileage = 0;
             let tomorrowTotalMileage = 0;
+            let hasTodayData = false;
+            let hasTomorrowData = false;
 
             rollData.forEach(({ date, numberOfDice, sides, rolls }) => {
                 const formattedDate = formatDate(formatDateByMDY(date));
@@ -255,13 +258,15 @@
                 const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
                 if (formattedDate === todayDate) {
                     todayTotalMileage += totalMileage;
+                    hasTodayData = true;
                 } else if (formattedDate === tomorrowDate) {
                     tomorrowTotalMileage += totalMileage;
+                    hasTomorrowData = true;
                 }
             });
 
-            document.getElementById('todayMileage').textContent = `${todayTotalMileage}`;
-            document.getElementById('tomorrowMileage').textContent = `${tomorrowTotalMileage}`;
+            document.getElementById('todayMileage').textContent = hasTodayData ? `${todayTotalMileage}` : "Pending Roll / Update";
+            document.getElementById('tomorrowMileage').textContent = hasTomorrowData ? `${tomorrowTotalMileage}` : "Pending Roll / Update";
             updateCurrentPoints();
         }
 
@@ -274,6 +279,7 @@
             });
 
             document.getElementById('currentPoints').textContent = totalPoints;
+            document.getElementById('pointsBreakdown').textContent = `(Dice Sides * Dice Roll)`;
         }
 
         function toggleInfo() {
@@ -281,6 +287,8 @@
             elements.forEach(element => {
                 element.classList.toggle('hidden');
             });
+            const pointsBreakdown = document.getElementById('pointsBreakdown');
+            pointsBreakdown.classList.toggle('hidden');
             const infoButton = document.querySelector('.info-button');
             if (infoButton.textContent === 'More Info') {
                 infoButton.textContent = 'Less Info';
