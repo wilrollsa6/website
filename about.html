@@ -131,6 +131,7 @@
                 const bankedMiles = parseInt(cells[7].textContent);
                 return { date, bankedMiles };
             });
+            console.log('Parsed banked miles data:', bankedMilesData); // Add logging
             return bankedMilesData;
         }
 
@@ -145,13 +146,15 @@
         function calculateBankedMiles(startDate, endDate, bankedMilesData) {
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
-            return bankedMilesData.reduce((total, { date, bankedMiles }) => {
+            const totalBankedMiles = bankedMilesData.reduce((total, { date, bankedMiles }) => {
                 const currentDate = new Date(date);
                 if (currentDate >= start && currentDate <= end) {
                     return total + bankedMiles;
                 }
                 return total;
             }, 0);
+            console.log(`Calculated banked miles from ${startDate} to ${endDate}:`, totalBankedMiles); // Add logging
+            return totalBankedMiles;
         }
 
         function displayParticipants(participants, bankedMilesData) {
