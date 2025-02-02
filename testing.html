@@ -210,20 +210,17 @@
             const todayDate = formatDate(today);
             const tomorrowDate = formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000));
 
-            // Fetch and parse TXT data
             const txtText = await fetchTXTData('rollData.txt');
             const rollData = parseTXT(txtText);
 
             let todayTotalMileage = 0;
             let tomorrowTotalMileage = 0;
 
-            // Populate the table with data from the TXT
             rollData.forEach(({ date, numberOfDice, sides, rolls }) => {
                 const formattedDate = formatDate(formatDateByMDY(date));
                 const weekday = getWeekday(formatDateByMDY(date));
                 addRow(formattedDate, weekday, numberOfDice, sides, rolls);
 
-                // Calculate today's and tomorrow's mileage
                 const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
                 if (formattedDate === todayDate) {
                     todayTotalMileage += totalMileage;
@@ -253,9 +250,9 @@
                 const bText = b.cells[columnIndex].textContent;
 
                 if (isNumericColumn) {
-                    return sortOrder[columnIndex] ? aText - bText : bText - aText;
+                    return sortOrder[columnIndex] ? bText - aText : aText - bText;
                 } else {
-                    return sortOrder[columnIndex] ? aText.localeCompare(bText) : bText.localeCompare(aText);
+                    return sortOrder[columnIndex] ? bText.localeCompare(aText) : aText.localeCompare(bText);
                 }
             });
 
