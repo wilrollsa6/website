@@ -24,10 +24,6 @@
             font-size: 16px;
             margin-bottom: 10px;
         }
-        .info-selected {
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
         .flex-container {
             width: 100%;
             display: flex;
@@ -63,16 +59,16 @@
             cursor: pointer; /* Add cursor pointer to headers for sorting */
         }
         th {
-            background-color: #d0d0d0; /* Slightly darker background for default shown headers */
+            background-color: #e0e0e0; /* Background for headers */
         }
         td {
-            background-color: #f0f8ff; /* Lighter background for default shown cells */
-        }
-        .info-column {
-            background-color: #f1f1f1; /* Slightly darker background for info columns */
+            background-color: #f9f9f9; /* Background for table cells */
         }
         .info-column.hidden {
-            background-color: #f0f8ff; /* Lighter background for hidden columns */
+            background-color: #f9f9f9; /* Background for hidden columns */
+        }
+        .info-column {
+            background-color: #f9f9f9; /* Background for info columns */
         }
         .hidden {
             display: none;
@@ -82,14 +78,6 @@
         }
         .sort-asc::after {
             content: ' ↑'; /* Up arrow */
-        }
-        .more-info-icon {
-            display: none;
-            font-size: 16px;
-            vertical-align: middle;
-        }
-        .info-selected .more-info-icon {
-            display: inline;
         }
     </style>
 </head>
@@ -108,7 +96,7 @@
         </div>
     </div>
 
-    <div class="info-button" onclick="toggleInfo()">More Info <span class="more-info-icon">📊</span></div>
+    <div class="info-button" onclick="toggleInfo()">More Info</div>
 
     <div class="container">
         <table>
@@ -236,12 +224,6 @@
             elements.forEach(element => {
                 element.classList.toggle('hidden');
             });
-            document.querySelectorAll('td').forEach(td => {
-                if (td.classList.contains('info-column')) {
-                    td.classList.toggle('info-column-shown');
-                }
-            });
-            document.querySelector('.info-button').classList.toggle('info-selected');
         }
 
         function sortTable(columnIndex) {
