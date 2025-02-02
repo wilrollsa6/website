@@ -75,6 +75,15 @@
         .participant-card h3 {
             margin: 0 0 10px 0;
         }
+        .border-green {
+            border-color: green;
+        }
+        .border-orange {
+            border-color: orange;
+        }
+        .border-red {
+            border-color: red;
+        }
     </style>
 </head>
 <body>
@@ -101,12 +110,24 @@
     </div>
     <script>
         async function fetchTXTData(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+                }
+                const txtText = await response.text();
+                console.log(`Fetched data from ${url}:`, txtText);
+                return txtText;
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
             const response = await fetch(url);
             const txtText = await response.text();
             return txtText;
         }
-
         function parseParticipants(txtText) {
+            console.log('Parsing participants:', txtText);
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
                 const [ID, Active, DisplayName, StartDate, EndDate, Losses] = row.split(',').map(item => item.trim());
@@ -114,32 +135,38 @@
                     ID, 
                     Active: Active === "1", 
                     DisplayName, 
-                    StartDate: convertDateToISO(StartDate), 
-                    EndDate: EndDate ? convertDateToISO(EndDate) : null, // Handle empty EndDate
+                    StartDate, 
+                    EndDate, 
                     Losses: parseInt(Losses) || 0
                 };
             }).filter(participant => participant.Active);
         }
-
-        function parseIndexHTML(htmlText) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            const rows = doc.querySelectorAll('#dataRows tr');
-            const bankedMilesData = Array.from(rows).map(row => {
-                const cells = row.querySelectorAll('td');
-                const date = convertDateToISO(cells[0].textContent);
-                const bankedMiles = parseInt(cells[7].textContent);
-                return { date, bankedMiles };
+        function parseCoverage(txtText) {
+            console.log('Parsing coverage:', txtText);
+            const rows = txtText.trim().split('\n').slice(1); // Remove header row
+            return rows.map(row => {
+                const [Date, UserID, CoverageUsed, RepaymentMiles] = row.split(',').map(item => item.trim());
+                return { 
+                    Date: new Date(Date), 
+                    UserID, 
+                    CoverageUsed: parseInt(CoverageUsed) || 0, 
+                    RepaymentMiles: parseInt(RepaymentMiles) || 0
+                };
             });
-            console.log('Parsed banked miles data:', bankedMilesData); // Add logging
-            return bankedMilesData;
         }
-
-        function convertDateToISO(dateStr) {
-            const [month, day, year] = dateStr.split('/');
-            return new Date(`20${year}-${month}-${day}`).toISOString().split('T')[0];
+        function parseRollData(txtText) {
+            console.log('Parsing roll data:', txtText);
+            const rows = txtText.trim().split('\n').slice(1); // Remove header row
+            return rows.map(row => {
+                const [Date, NumberOfDice, DiceSides, Roll] = row.split(';').map(item => item.trim());
+                return { 
+                    Date: new Date(Date), 
+                    NumberOfDice: parseInt(NumberOfDice), 
+                    DiceSides: parseInt(DiceSides), 
+                    Roll: parseInt(Roll)
+                };
+            });
         }
-
         function calculateStreak(startDate, endDate) {
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
@@ -147,32 +174,45 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays;
         }
-
-        function calculateBankedMiles(startDate, endDate, bankedMilesData) {
-            const start = new Date(startDate);
-            const end = endDate ? new Date(endDate) : new Date();
-            const totalBankedMiles = bankedMilesData.reduce((total, { date, bankedMiles }) => {
-                const currentDate = new Date(date);
-                if (currentDate >= start && currentDate <= end) {
-                    return total + bankedMiles;
+        function calculateBankedMiles(participant, rollData, coverageData) {
+            const startDate = new Date(participant.StartDate);
+            const endDate = participant.EndDate ? new Date(participant.EndDate) : new Date();
+            let bankedMiles = 0;
+            let totalCoverageUsed = 0;
+            let totalRepaymentMiles = 0;
+            let repaymentStatus = 'green';
+            // Calculate banked miles
+            rollData.forEach(({ Date, Roll }) => {
+                if (Date >= startDate && Date <= endDate) {
+                    bankedMiles += Roll;
                 }
-                return total;
-            }, 0);
-            console.log(`Calculated banked miles from ${startDate} to ${endDate}:`, totalBankedMiles); // Add logging
-            return totalBankedMiles;
+            });
+            // Subtract coverage used and add repayment miles
+            coverageData.forEach(({ Date, UserID, CoverageUsed, RepaymentMiles }) => {
+                if (UserID === participant.ID && Date >= startDate && Date <= endDate) {
+                    bankedMiles -= CoverageUsed;
+                    totalCoverageUsed += CoverageUsed;
+                    totalRepaymentMiles += RepaymentMiles;
+                    const repaymentDeadline = new Date(Date.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    if (new Date() > repaymentDeadline && totalCoverageUsed > totalRepaymentMiles) {
+                        repaymentStatus = 'red';
+                    } else if (new Date() <= repaymentDeadline && totalCoverageUsed > totalRepaymentMiles) {
+                        repaymentStatus = 'orange';
+                    }
+                }
+            });
+            return { bankedMiles, repaymentStatus };
         }
-
-        function displayParticipants(participants, bankedMilesData) {
+        function displayParticipants(participants, rollData, coverageData) {
+        function displayParticipants(participants) {
             const participantCards = document.getElementById('participantCards');
             participantCards.innerHTML = '';
-
             participants.forEach(participant => {
                 const { DisplayName, StartDate, EndDate, Losses } = participant;
-                const endDate = EndDate || new Date().toISOString().split('T')[0]; // Use today as end date if still active
-                const streak = calculateStreak(StartDate, endDate);
-                const bankedMiles = calculateBankedMiles(StartDate, endDate, bankedMilesData);
-
+                const streak = calculateStreak(StartDate, EndDate);
+                const { bankedMiles, repaymentStatus } = calculateBankedMiles(participant, rollData, coverageData);
                 const card = document.createElement('div');
+                card.classList.add('participant-card', `border-${repaymentStatus}`);
                 card.classList.add('participant-card');
                 card.innerHTML = `
                     <h3>${DisplayName}</h3>
@@ -184,17 +224,26 @@
                 participantCards.appendChild(card);
             });
         }
-
         async function populateParticipants() {
-            const participantsText = await fetchTXTData('participants.txt');
-            const indexHtmlText = await fetchTXTData('index.html');
-
-            const participants = parseParticipants(participantsText);
-            const bankedMilesData = parseIndexHTML(indexHtmlText);
-
-            displayParticipants(participants, bankedMilesData);
+            try {
+                const participantsText = await fetchTXTData('participants.txt');
+                const coverageText = await fetchTXTData('coverage.txt');
+                const rollDataText = await fetchTXTData('rollData.txt');
+                if (!participantsText || !coverageText || !rollDataText) {
+                    throw new Error('Failed to fetch one or more data files.');
+                }
+                const participants = parseParticipants(participantsText);
+                const coverageData = parseCoverage(coverageText);
+                const rollData = parseRollData(rollDataText);
+                displayParticipants(participants, rollData, coverageData);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('participantCards').innerText = 'Failed to load participants.';
+            }
+            const txtText = await fetchTXTData('participants.txt');
+            const participants = parseParticipants(txtText);
+            displayParticipants(participants);
         }
-
         window.onload = populateParticipants;
     </script>
 </body>
