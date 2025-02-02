@@ -64,13 +64,8 @@
         td {
             background-color: #f9f9f9; /* Background for table cells */
         }
+        /* Removed background color styles for .info-column and .info-column.hidden */
         .info-column.hidden {
-            /*background-color: #f9f9f9; /* Background for hidden columns */
-        }
-        .info-column {
-            /*background-color: #f9f9f9; /* Background for info columns */
-        }
-        .hidden {
             display: none;
         }
         .sort-asc::after {
@@ -164,7 +159,13 @@
 
             const rollCell = document.createElement('td');
             rollCell.textContent = rolls.join(',');
+            rollCell.classList.add('info-column', 'hidden');
             row.appendChild(rollCell);
+
+            const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
+            const totalMileageCell = document.createElement('td');
+            totalMileageCell.textContent = totalMileage;
+            row.appendChild(totalMileageCell);
 
             const points = rolls.reduce((acc, roll, index) => acc + (sides[index] * roll), 0);
             const pointsCell = document.createElement('td');
@@ -177,11 +178,6 @@
             bankedMilesCell.textContent = bankedMiles;
             bankedMilesCell.classList.add('info-column', 'hidden');
             row.appendChild(bankedMilesCell);
-
-            const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
-            const totalMileageCell = document.createElement('td');
-            totalMileageCell.textContent = totalMileage;
-            row.appendChild(totalMileageCell);
 
             tbody.appendChild(row);
         }
@@ -238,6 +234,12 @@
             elements.forEach(element => {
                 element.classList.toggle('hidden');
             });
+            const infoButton = document.querySelector('.info-button');
+            if (infoButton.textContent === 'More Info') {
+                infoButton.textContent = 'Less Info';
+            } else {
+                infoButton.textContent = 'More Info';
+            }
         }
 
         function sortTable(columnIndex) {
