@@ -112,9 +112,17 @@
 
     <script>
         async function fetchTXTData(url) {
-            const response = await fetch(url);
-            const txtText = await response.text();
-            return txtText;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+                }
+                const txtText = await response.text();
+                return txtText;
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
         }
 
         function parseParticipants(txtText) {
@@ -225,15 +233,24 @@
         }
 
         async function populateParticipants() {
-            const participantsText = await fetchTXTData('participants.txt');
-            const coverageText = await fetchTXTData('coverage.txt');
-            const rollDataText = await fetchTXTData('rollData.txt');
-            
-            const participants = parseParticipants(participantsText);
-            const coverageData = parseCoverage(coverageText);
-            const rollData = parseRollData(rollDataText);
-            
-            displayParticipants(participants, rollData, coverageData);
+            try {
+                const participantsText = await fetchTXTData('participants.txt');
+                const coverageText = await fetchTXTData('coverage.txt');
+                const rollDataText = await fetchTXTData('rollData.txt');
+
+                if (!participantsText || !coverageText || !rollDataText) {
+                    throw new Error('Failed to fetch one or more data files.');
+                }
+
+                const participants = parseParticipants(participantsText);
+                const coverageData = parseCoverage(coverageText);
+                const rollData = parseRollData(rollDataText);
+
+                displayParticipants(participants, rollData, coverageData);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('participantCards').innerText = 'Failed to load participants.';
+            }
         }
 
         window.onload = populateParticipants;
