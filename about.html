@@ -105,7 +105,6 @@
             const txtText = await response.text();
             return txtText;
         }
-
         function parseParticipants(txtText) {
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
@@ -114,33 +113,12 @@
                     ID, 
                     Active: Active === "1", 
                     DisplayName, 
-                    StartDate: convertDateToISO(StartDate), 
-                    EndDate: EndDate ? convertDateToISO(EndDate) : null, // Handle empty EndDate
+                    StartDate, 
+                    EndDate, 
                     Losses: parseInt(Losses) || 0
                 };
             }).filter(participant => participant.Active);
         }
-
-        function parseIndexHTML(htmlText) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            const rows = doc.querySelectorAll('#dataRows tr');
-            const data = Array.from(rows).map(row => {
-                const cells = row.querySelectorAll('td');
-                const date = convertDateToISO(cells[0].textContent);
-                const bankedMiles = parseInt(cells[7].textContent);
-                const points = parseInt(cells[6].textContent);
-                return { date, bankedMiles, points };
-            });
-            console.log('Parsed data from index.html:', data); // Add logging
-            return data;
-        }
-
-        function convertDateToISO(dateStr) {
-            const [month, day, year] = dateStr.split('/');
-            return new Date(`20${year}-${month}-${day}`).toISOString().split('T')[0];
-        }
-
         function calculateStreak(startDate, endDate) {
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
@@ -148,35 +126,12 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays;
         }
-
-        function calculateTotals(startDate, endDate, data) {
-            const start = new Date(startDate);
-            const end = endDate ? new Date(endDate) : new Date();
-            let totalBankedMiles = 0;
-            let totalPoints = 0;
-
-            data.forEach(({ date, bankedMiles, points }) => {
-                const currentDate = new Date(date);
-                if (currentDate >= start && currentDate <= end) {
-                    totalBankedMiles += bankedMiles;
-                    totalPoints += points;
-                }
-            });
-
-            console.log(`Calculated totals from ${startDate} to ${endDate}:`, { totalBankedMiles, totalPoints }); // Add logging
-            return { totalBankedMiles, totalPoints };
-        }
-
-        function displayParticipants(participants, data) {
+        function displayParticipants(participants) {
             const participantCards = document.getElementById('participantCards');
             participantCards.innerHTML = '';
-
             participants.forEach(participant => {
                 const { DisplayName, StartDate, EndDate, Losses } = participant;
-                const endDate = EndDate || new Date().toISOString().split('T')[0]; // Use today as end date if still active
-                const streak = calculateStreak(StartDate, endDate);
-                const { totalBankedMiles, totalPoints } = calculateTotals(StartDate, endDate, data);
-
+                const streak = calculateStreak(StartDate, EndDate);
                 const card = document.createElement('div');
                 card.classList.add('participant-card');
                 card.innerHTML = `
@@ -184,28 +139,15 @@
                     <p><strong>Start Date:</strong> ${StartDate}</p>
                     <p><strong>Streak:</strong> ${streak} days</p>
                     <p><strong>Number of Losses:</strong> ${Losses}</p>
-                    <p><strong>Banked Mileage:</strong> ${totalBankedMiles}</p>
-                    <p><strong>Current Points:</strong> ${totalPoints}</p>
                 `;
                 participantCards.appendChild(card);
             });
         }
-
         async function populateParticipants() {
-            try {
-                const participantsText = await fetchTXTData('participants.txt');
-                const indexHtmlText = await fetchTXTData('index.html');
-
-                const participants = parseParticipants(participantsText);
-                const data = parseIndexHTML(indexHtmlText);
-
-                displayParticipants(participants, data);
-            } catch (error) {
-                console.error('Error populating participants:', error);
-                document.getElementById('participantCards').innerText = 'Failed to load participants.';
-            }
+            const txtText = await fetchTXTData('participants.txt');
+            const participants = parseParticipants(txtText);
+            displayParticipants(participants);
         }
-
         window.onload = populateParticipants;
     </script>
 </body>
