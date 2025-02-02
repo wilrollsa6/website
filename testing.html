@@ -32,9 +32,6 @@
             padding: 0 20px;
             box-sizing: border-box;
         }
-        .flex-itwm {
-            flex-grow: 1;
-        }
         .container {
             flex: 0 0 auto; /* Prevent containers from stretching */
             margin: 20px;
@@ -68,10 +65,10 @@
             background-color: #f9f9f9; /* Background for table cells */
         }
         .info-column.hidden {
-            /* background-color: #f9f9f9; /* Background for hidden columns */
+            background-color: #f9f9f9; /* Background for hidden columns */
         }
         .info-column {
-            /* background-color: #f9f9f9; /* Background for info columns */
+            background-color: #f9f9f9; /* Background for info columns */
         }
         .hidden {
             display: none;
@@ -90,12 +87,12 @@
     <div class="flex-container">
         <div class="container">
             <div class="header">Today's Mileage</div>
-            <div id="todayRoll"></div>
+            <div id="todayMileage"></div>
         </div>
 
         <div class="container">
             <div class="header">Tomorrow's Mileage</div>
-            <div id="tomorrowRoll"></div>
+            <div id="tomorrowMileage"></div>
         </div>
     </div>
 
@@ -112,6 +109,7 @@
                     <th onclick="sortTable(4)">Dice Roll</th>
                     <th class="info-column hidden" onclick="sortTable(5)">Points</th>
                     <th class="info-column hidden" onclick="sortTable(6)">Banked Miles</th>
+                    <th onclick="sortTable(7)">Total Mileage</th>
                 </tr>
             </thead>
             <tbody id="dataRows">
@@ -121,7 +119,7 @@
     </div>
 
     <script>
-        let sortOrder = [true, true, true, true, true, true, true];
+        let sortOrder = [true, true, true, true, true, true, true, true];
         let currentSortColumn = -1;
 
         function formatDateByMDY(date) {
@@ -142,7 +140,7 @@
             return new Intl.DateTimeFormat('en-US', options).format(date);
         }
 
-        function addRow(date, weekday, numberOfDice, sides, roll) {
+        function addRow(date, weekday, numberOfDice, sides, rolls) {
             const tbody = document.getElementById('dataRows');
             const row = document.createElement('tr');
 
@@ -160,23 +158,30 @@
             row.appendChild(numberOfDiceCell);
 
             const sidesCell = document.createElement('td');
-            sidesCell.textContent = sides;
+            sidesCell.textContent = sides.join(',');
             sidesCell.classList.add('info-column', 'hidden');
             row.appendChild(sidesCell);
 
             const rollCell = document.createElement('td');
-            rollCell.textContent = roll;
+            rollCell.textContent = rolls.join(',');
             row.appendChild(rollCell);
 
+            const points = rolls.reduce((acc, roll, index) => acc + (sides[index] * roll), 0);
             const pointsCell = document.createElement('td');
-            pointsCell.textContent = sides * roll;
+            pointsCell.textContent = points;
             pointsCell.classList.add('info-column', 'hidden');
             row.appendChild(pointsCell);
 
+            const bankedMiles = numberOfDice;
             const bankedMilesCell = document.createElement('td');
-            bankedMilesCell.textContent = numberOfDice;
+            bankedMilesCell.textContent = bankedMiles;
             bankedMilesCell.classList.add('info-column', 'hidden');
             row.appendChild(bankedMilesCell);
+
+            const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
+            const totalMileageCell = document.createElement('td');
+            totalMileageCell.textContent = totalMileage;
+            row.appendChild(totalMileageCell);
 
             tbody.appendChild(row);
         }
@@ -190,8 +195,13 @@
         function parseTXT(txtText) {
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
-                const [date, numberOfDice, sides, roll] = row.split(';');
-                return { date, numberOfDice: parseInt(numberOfDice), sides: parseInt(sides), roll: parseInt(roll) };
+                const [date, numberOfDice, sides, rolls] = row.split(';');
+                return { 
+                    date, 
+                    numberOfDice: parseInt(numberOfDice), 
+                    sides: sides.split(',').map(Number), 
+                    rolls: rolls.split(',').map(Number)
+                };
             });
         }
 
@@ -204,22 +214,26 @@
             const txtText = await fetchTXTData('rollData.txt');
             const rollData = parseTXT(txtText);
 
+            let todayTotalMileage = 0;
+            let tomorrowTotalMileage = 0;
+
             // Populate the table with data from the TXT
-            rollData.forEach(({ date, numberOfDice, sides, roll }) => {
+            rollData.forEach(({ date, numberOfDice, sides, rolls }) => {
                 const formattedDate = formatDate(formatDateByMDY(date));
                 const weekday = getWeekday(formatDateByMDY(date));
-                addRow(formattedDate, weekday, numberOfDice, sides, roll);
+                addRow(formattedDate, weekday, numberOfDice, sides, rolls);
+
+                // Calculate today's and tomorrow's mileage
+                const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
+                if (formattedDate === todayDate) {
+                    todayTotalMileage += totalMileage;
+                } else if (formattedDate === tomorrowDate) {
+                    tomorrowTotalMileage += totalMileage;
+                }
             });
 
-            // Retrieve today's and tomorrow's rolls
-            const todayRollData = rollData.find(row => formatDate(formatDateByMDY(row.date)) === todayDate);
-            const tomorrowRollData = rollData.find(row => formatDate(formatDateByMDY(row.date)) === tomorrowDate);
-
-            const todayRoll = todayRollData ? todayRollData.roll : 'Roll / Update Incoming';
-            const tomorrowRoll = tomorrowRollData ? tomorrowRollData.roll : 'Roll / Update Incoming';
-
-            document.getElementById('todayRoll').textContent = `${todayRoll}`;
-            document.getElementById('tomorrowRoll').textContent = `${tomorrowRoll}`;
+            document.getElementById('todayMileage').textContent = `${todayTotalMileage}`;
+            document.getElementById('tomorrowMileage').textContent = `${tomorrowTotalMileage}`;
         }
 
         function toggleInfo() {
@@ -232,16 +246,16 @@
         function sortTable(columnIndex) {
             const tbody = document.getElementById('dataRows');
             const rows = Array.from(tbody.rows);
-            const isNumericColumn = [2, 3, 4, 5, 6].includes(columnIndex);
+            const isNumericColumn = [2, 3, 4, 5, 6, 7].includes(columnIndex);
 
             rows.sort((a, b) => {
                 const aText = a.cells[columnIndex].textContent;
                 const bText = b.cells[columnIndex].textContent;
 
                 if (isNumericColumn) {
-                    return sortOrder[columnIndex] ? bText - aText : aText - bText;
+                    return sortOrder[columnIndex] ? aText - bText : bText - aText;
                 } else {
-                    return sortOrder[columnIndex] ? bText.localeCompare(aText) : aText.localeCompare(bText);
+                    return sortOrder[columnIndex] ? aText.localeCompare(bText) : bText.localeCompare(aText);
                 }
             });
 
