@@ -86,6 +86,11 @@
         </div>
 
         <div class="container">
+            <div class="header">Current Points</div>
+            <div id="currentPoints"></div>
+        </div>
+
+        <div class="container">
             <div class="header">Tomorrow's Mileage</div>
             <div id="tomorrowMileage"></div>
         </div>
@@ -180,6 +185,9 @@
             row.appendChild(bankedMilesCell);
 
             tbody.appendChild(row);
+
+            // Update current points
+            updateCurrentPoints();
         }
 
         async function fetchTXTData(url) {
@@ -227,6 +235,16 @@
 
             document.getElementById('todayMileage').textContent = `${todayTotalMileage}`;
             document.getElementById('tomorrowMileage').textContent = `${tomorrowTotalMileage}`;
+            updateCurrentPoints();
+        }
+
+        function updateCurrentPoints() {
+            const pointsCells = document.querySelectorAll('td:nth-child(7)');
+            let totalPoints = 0;
+            pointsCells.forEach(cell => {
+                totalPoints += parseInt(cell.textContent, 10);
+            });
+            document.getElementById('currentPoints').textContent = totalPoints;
         }
 
         function toggleInfo() {
