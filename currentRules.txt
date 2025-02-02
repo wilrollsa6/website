@@ -14,6 +14,6 @@ Level;Text
 2,Repayment is only accepted in the form of additional activity mileage in subsequent days - in addition to the required mileage for those days from normal Dice Rolling.
 1,Points
 2,Points are calculated by Σ_rolledDice[ (Dice Sidedness) * (Dice Roll) ]
-2,Once a Points Milestone is reached (every 1,000 points), enjoy a pizza party (or something...we haven't nailed this down yet...)
+2,Once a Points Milestone is reached (every 1000 points), enjoy a pizza party (or something...we haven't nailed this down yet...)
 1,Ideas / Comments?
 2,Pleae let us know!
