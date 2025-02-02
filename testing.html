@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Rolling Runners - About</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff; /* Pleasant background color */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-item {
+            padding: 10px 20px;
+            background-color: #444;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .nav-item:hover {
+            background-color: #555;
+        }
+        .title {
+            font-size: 36px;
+            color: #fff;
+            text-align: center;
+        }
+        .content-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center; /* Center the text inside the container */
+        }
+        .header {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .info {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .participants {
+            margin: 20px 0;
+        }
+        .participant-card {
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            text-align: left;
+        }
+        .participant-card h3 {
+            margin: 0 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-container">
+            <div class="nav-item" onclick="location.href='index.html'">Home</div>
+            <div class="nav-item" onclick="location.href='rules.html'">Rules</div>
+        </div>
+        <div class="title">The Rolling Runners</div>
+        <div class="nav-container">
+            <div class="nav-item" onclick="location.href='about.html'">About</div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <h2 class="header">We roll dice and run...what more do you want?!</h2>
+        <div class="info">
+            <i>I'll update this more soon...</i>
+        </div>
+        <div class="participants">
+            <h2 class="header">Participants</h2>
+            <div id="participantCards">Loading participants...</div>
+        </div>
+    </div>
+    <script>
+        async function fetchTXTData(url) {
+            const response = await fetch(url);
+            const txtText = await response.text();
+            return txtText;
+        }
+        function parseParticipants(txtText) {
+            const rows = txtText.trim().split('\n').slice(1); // Remove header row
+            return rows.map(row => {
+                const [ID, Active, DisplayName, StartDate, EndDate, Losses] = row.split(',').map(item => item.trim());
+                return { 
+                    ID, 
+                    Active: Active === "1", 
+                    DisplayName, 
+                    StartDate, 
+                    EndDate, 
+                    Losses: parseInt(Losses) || 0
+                };
+            }).filter(participant => participant.Active);
+        }
+        function calculateStreak(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = endDate ? new Date(endDate) : new Date();
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+        function displayParticipants(participants) {
+            const participantCards = document.getElementById('participantCards');
+            participantCards.innerHTML = '';
+            participants.forEach(participant => {
+                const { DisplayName, StartDate, EndDate, Losses } = participant;
+                const streak = calculateStreak(StartDate, EndDate);
+                const card = document.createElement('div');
+                card.classList.add('participant-card');
+                card.innerHTML = `
+                    <h3>${DisplayName}</h3>
+                    <p><strong>Start Date:</strong> ${StartDate}</p>
+                    <p><strong>Streak:</strong> ${streak} days</p>
+                    <p><strong>Number of Losses:</strong> ${Losses}</p>
+                `;
+                participantCards.appendChild(card);
+            });
+        }
+        async function populateParticipants() {
+            const txtText = await fetchTXTData('participants.txt');
+            const participants = parseParticipants(txtText);
+            displayParticipants(participants);
+        }
+        window.onload = populateParticipants;
+    </script>
+</body>
+</html>
