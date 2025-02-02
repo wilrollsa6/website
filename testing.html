@@ -59,7 +59,7 @@
             cursor: pointer; /* Add cursor pointer to headers for sorting */
         }
         th {
-            background-color: #e0e0e0; /* Background for headers */
+            background-color: #d0d0d0; /* Slightly darker background for all headers */
         }
         td {
             background-color: #f9f9f9; /* Background for table cells */
@@ -73,11 +73,11 @@
         .hidden {
             display: none;
         }
-        .sort-desc::after {
-            content: ' ↓'; /* Down arrow */
-        }
         .sort-asc::after {
             content: ' ↑'; /* Up arrow */
+        }
+        .sort-desc::after {
+            content: ' ↓'; /* Down arrow */
         }
     </style>
 </head>
@@ -236,9 +236,9 @@
                 const bText = b.cells[columnIndex].textContent;
 
                 if (isNumericColumn) {
-                    return sortOrder[columnIndex] ? aText - bText : bText - aText;
+                    return sortOrder[columnIndex] ? bText - aText : aText - bText;
                 } else {
-                    return sortOrder[columnIndex] ? aText.localeCompare(bText) : bText.localeCompare(aText);
+                    return sortOrder[columnIndex] ? bText.localeCompare(aText) : aText.localeCompare(bText);
                 }
             });
 
