@@ -118,6 +118,7 @@
                     throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
                 }
                 const txtText = await response.text();
+                console.log(`Fetched data from ${url}:`, txtText);
                 return txtText;
             } catch (error) {
                 console.error(error);
@@ -126,6 +127,7 @@
         }
 
         function parseParticipants(txtText) {
+            console.log('Parsing participants:', txtText);
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
                 const [ID, Active, DisplayName, StartDate, EndDate, Losses] = row.split(',').map(item => item.trim());
@@ -141,6 +143,7 @@
         }
 
         function parseCoverage(txtText) {
+            console.log('Parsing coverage:', txtText);
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
                 const [Date, UserID, CoverageUsed, RepaymentMiles] = row.split(',').map(item => item.trim());
@@ -154,6 +157,7 @@
         }
 
         function parseRollData(txtText) {
+            console.log('Parsing roll data:', txtText);
             const rows = txtText.trim().split('\n').slice(1); // Remove header row
             return rows.map(row => {
                 const [Date, NumberOfDice, DiceSides, Roll] = row.split(';').map(item => item.trim());
