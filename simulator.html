@@ -73,7 +73,7 @@
             margin-bottom: 10px;
         }
         .week-summary {
-            margin-top: 20px;
+            margin-top: 30px;
             margin-bottom: 20px;
             padding: 15px;
             border: 1px solid #ccc;
@@ -96,13 +96,13 @@
     </div>
 
     <div class="content-container">
+        <h2 class="header">Dice Roll Simulator</h2>
+
         <div class="week-summary">
             <div><strong>Estimated Value for the Week:</strong> <span id="week-estimated">24.5</span></div>
             <div><strong>Minimum Weekly Amount:</strong> <span id="week-minimum">7</span></div>
             <div><strong>Maximum Weekly Amount:</strong> <span id="week-maximum">140</span></div>
         </div>
-
-        <h2 class="header">Dice Roll Simulator</h2>
 
         <div id="monday" class="day-container">
             <div class="day-header">Monday</div>
@@ -250,20 +250,22 @@
         function calculateWeekEstimatedValues() {
             const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             let weekEstimatedValue = 0;
-            let minWeeklyAmount = Number.MAX_VALUE;
-            let maxWeeklyAmount = Number.MIN_VALUE;
+            let minWeeklyAmount = 0;
+            let maxWeeklyAmount = 0;
 
             days.forEach(day => {
+                const diceSelector = document.getElementById(`${day}-dice`);
+                const diceSides = parseInt(diceSelector.value);
                 const estimatedValueElement = document.getElementById(`${day}-estimated`);
                 const estimatedValue = parseFloat(estimatedValueElement.textContent);
                 weekEstimatedValue += estimatedValue;
-                minWeeklyAmount = Math.min(minWeeklyAmount, estimatedValue);
-                maxWeeklyAmount = Math.max(maxWeeklyAmount, estimatedValue);
+                minWeeklyAmount += 1;
+                maxWeeklyAmount += diceSides;
             });
 
             document.getElementById('week-estimated').textContent = weekEstimatedValue.toFixed(1);
-            document.getElementById('week-minimum').textContent = (minWeeklyAmount * 7).toFixed(1); // Minimum weekly amount
-            document.getElementById('week-maximum').textContent = (maxWeeklyAmount * 7).toFixed(1); // Maximum weekly amount
+            document.getElementById('week-minimum').textContent = (minWeeklyAmount).toFixed(1); // Minimum weekly amount
+            document.getElementById('week-maximum').textContent = (maxWeeklyAmount).toFixed(1); // Maximum weekly amount
         }
 
         document.addEventListener("DOMContentLoaded", function() {
@@ -272,3 +274,4 @@
     </script>
 </body>
 </html>
+``` ▋
