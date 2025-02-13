@@ -231,16 +231,6 @@
 
         <div class="week-summary">
             <div><strong>Estimated Value for the Week:</strong> <span id="week-estimated">24.5</span></div>
-            <div><strong>Estimated Value for Each Day:</strong></div>
-            <ul>
-                <li>Monday: <span id="monday-week-estimated">3.5</span></li>
-                <li>Tuesday: <span id="tuesday-week-estimated">3.5</span></li>
-                <li>Wednesday: <span id="wednesday-week-estimated">3.5</span></li>
-                <li>Thursday: <span id="thursday-week-estimated">3.5</span></li>
-                <li>Friday: <span id="friday-week-estimated">3.5</li>
-                <li>Saturday: <span id="saturday-week-estimated">3.5</span></li>
-                <li>Sunday: <span id="sunday-week-estimated">3.5</span></li>
-            </ul>
         </div>
     </div>
     <script>
@@ -260,10 +250,8 @@
 
             days.forEach(day => {
                 const estimatedValueElement = document.getElementById(`${day}-estimated`);
-                const dayWeekEstimatedElement = document.getElementById(`${day}-week-estimated`);
                 const estimatedValue = parseFloat(estimatedValueElement.textContent);
                 weekEstimatedValue += estimatedValue;
-                dayWeekEstimatedElement.textContent = estimatedValue.toFixed(1);
             });
 
             document.getElementById('week-estimated').textContent = weekEstimatedValue.toFixed(1);
