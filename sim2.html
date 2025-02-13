@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Rolling Runners - Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff; /* Pleasant background color */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-item {
+            padding: 10px 20px;
+            background-color: #444;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .nav-item:hover {
+            background-color: #555;
+        }
+        .title {
+            font-size: 36px;
+            color: #fff;
+            text-align: center;
+        }
+        .content-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center; /* Center the text inside the container */
+        }
+        .header {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .day-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            text-align: left;
+        }
+        .day-header {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .dice-selector, .num-dice {
+            margin-bottom: 10px;
+        }
+        .estimated-value {
+            margin-bottom: 10px;
+        }
+        .week-summary {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            text-align: center;
+        }
+        .error-message {
+            color: red;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-container">
+            <div class="nav-item" onclick="location.href='index.html'">Home</div>
+            <div class="nav-item" onclick="location.href='rules.html'">Rules</div>
+        </div>
+        <div class="title">The Rolling Runners</div>
+        <div class="nav-container">
+            <div class="nav-item" onclick="location.href='about.html'">About</div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <h2 class="header">Dice Roll Simulator</h2>
+
+        <div class="week-summary">
+            <div><strong>Estimated Value for the Week:</strong> <span id="week-estimated">24.5</span></div>
+            <div><strong>Minimum Weekly Amount:</strong> <span id="week-minimum">7</span></div>
+            <div><strong>Maximum Weekly Amount:</strong> <span id="week-maximum">140</span></div>
+        </div>
+
+        <div id="monday" class="day-container">
+            <div class="day-header">Monday</div>
+            <div class="num-dice">
+                <label for="monday-num-dice">Number of Dice: </label>
+                <input type="text" id="monday-num-dice" value="1" oninput="updateNumDice('monday')">
+                <div id="monday-error" class="error-message"></div>
+            </div>
+            <div class="dice-selector">
+                <label for="monday-dice-0">Dice Sidedness: </label>
+                <select id="monday-dice-0" onchange="calculateEstimatedValue('monday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="monday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="tuesday" class="day-container">
+            <div class="day-header">Tuesday</div>
+            <div class="num-dice">
+                <label for="tuesday-num-dice">Number of Dice: </label>
+                <input type="text" id="tuesday-num-dice" value="1" oninput="updateNumDice('tuesday')">
+                <div id="tuesday-error" class="error-message"></div>
+            </div>
+            <div class="dice-selector">
+                <label for="tuesday-dice-0">Dice Sidedness: </label>
+                <select id="tuesday-dice-0" onchange="calculateEstimatedValue('tuesday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="tuesday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="wednesday" class="day-container">
+            <div class="day-header">Wednesday</div>
+            <div class="num-dice">
+                <label for="wednesday-num-dice">Number of Dice: </label>
+                <input type="text" id="wednesday-num-dice" value="1" oninput="updateNumDice('wednesday')">
+                <div id="wednesday-error" class="error-message"></div>
+            </div>
+            <div class="dice-selector">
+                <label for="wednesday-dice-0">Dice Sidedness: </label>
+                <select id="wednesday-dice-0" onchange="calculateEstimatedValue('wednesday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="wednesday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="thursday" class="day-container">
+            <div class="day-header">Thursday</div>
+            <div class="num-dice">
+                <label for="thursday-num-dice">Number of Dice: </label>
+                <input type="text" id="thursday-num-dice" value="1" oninput="updateNumDice('thursday')">
+                <div id="thursday-error" class="error-message"></div>
+            </div>
+            <div class="dice-selector">
+                <label for="thursday-dice-0">Dice Sidedness: </label>
+                <select id="thursday-dice-0" onchange="calculateEstimatedValue('thursday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="thursday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="friday" class="day-container">
+            <div class="day-header">Friday</div>
+            <div class="num-dice">
+                <label for="friday-num-dice">Number of Dice: </label>
+                <input type="text" id="friday-num-dice" value="1" oninput="updateNumDice('friday')">
+                <div id="friday-error" class="error-message"></div>
+            </div>
+            <div class="dice-selector">
+                <label for="friday-dice-0">Dice Sidedness: </label>
+                <select id="friday-dice-0" onchange="calculateEstimatedValue('friday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="friday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="saturday" class="day-container">
+            <div class="day-header">Saturday</div>
+            <div class="num-dice">
+                <label for="saturday-num-dice">Number of Dice: </label>
+                <input type="text" id="saturday-num-dice" value="1" oninput="updateNumDice('saturday')">
+                <div id="saturday-error" class="error-message"></div>
+            </div>
+            <div class="dice-selector">
+                <label for="saturday-dice-0">Dice Sidedness: </label>
+                <select id="saturday-dice-0" onchange="calculateEstimatedValue('saturday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="saturday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="sunday" class="day-container">
+            <div class="day-header">Sunday</div>
+            <div class="num-dice">
+                <label for="sunday-num-dice">Number of Dice: </label>
+                <input type="text" id="sunday-num-dice" value="1" oninput="updateNumDice('sunday')">
+                <div id="sunday-error" class="error-message"></div>
+            </div>
+            <div class="dice-selector">
+                <label for="sunday-dice-0">Dice Sidedness: </label>
+                <select id="sunday-dice-0" onchange="calculateEstimatedValue('sunday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="sunday-estimated">3.5</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        function calculateEstimatedValue(day) {
+            const numDiceInput = document.getElementById(`${day}-num-dice`);
+            const numDice = parseInt(numDiceInput.value);
+            const errorMessage = document.getElementById(`${day}-error`);
+            
+            if (isNaN(numDice) || numDice < 1) {
+                errorMessage.textContent = "Please enter a valid number of dice.";
+                return;
+            } else {
+                errorMessage.textContent = "";
+            }
+
+            let totalEstimatedValue = 0;
+            for (let i = 0; i < numDice; i++) {
+                const diceSelector = document.getElementById(`${day}-dice-${i}`);
+                const diceSides = parseInt(diceSelector.value);
+                const estimatedValue = (diceSides + 1) / 2;
+                totalEstimatedValue += estimatedValue;
+            }
+
+            const estimatedValueElement = document.getElementById(`${day}-estimated`);
+            estimatedValueElement.textContent = totalEstimatedValue.toFixed(1);
+
+            calculateWeekEstimatedValues();
+        }
+
+        function calculateWeekEstimatedValues() {
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            let weekEstimatedValue = 0;
+            let minWeeklyAmount = 0;
+            let maxWeeklyAmount = 0;
+
+            days.forEach(day => {
+                const numDiceInput = document.getElementById(`${day}-num-dice`);
+                const numDice = parseInt(numDiceInput.value);
+
+                for (let i = 0; i < numDice; i++) {
+                    const diceSelector = document.getElementById(`${day}-dice-${i}`);
+                    const diceSides = parseInt(diceSelector.value);
+                    const estimatedValueElement = document.getElementById(`${day}-estimated`);
+                    const estimatedValue = parseFloat(estimatedValueElement.textContent) / numDice;
+                    weekEstimatedValue += estimatedValue;
+                    minWeeklyAmount += 1;
+                    maxWeeklyAmount += diceSides;
+                }
+            });
+
+            document.getElementById('week-estimated').textContent = weekEstimatedValue.toFixed(1);
+            document.getElementById('week-minimum').textContent = (minWeeklyAmount).toFixed(1); // Minimum weekly amount
+            document.getElementById('week-maximum').textContent = (maxWeeklyAmount).toFixed(1); // Maximum weekly amount
+        }
+
+        function updateNumDice(day) {
+            const numDiceInput = document.getElementById(`${day}-num-dice`);
+            const numDice = parseInt(numDiceInput.value);
+            const errorMessage = document.getElementById(`${day}-error`);
+
+            if (isNaN(numDice) || numDice < 1) {
+                errorMessage.textContent = "Please enter a valid number of dice.";
+                return;
+            } else {
+                errorMessage.textContent = "";
+            }
+
+            const dayContainer = document.getElementById(day);
+            dayContainer.querySelectorAll('.dice-selector').forEach(selector => selector.remove());
+
+            for (let i = 0; i < numDice; i++) {
+                const diceSelector = document.createElement('div');
+                diceSelector.classList.add('dice-selector');
+
+                diceSelector.innerHTML = `
+                    <label for="${day}-dice-${i}">Dice Sidedness: </label>
+                    <select id="${day}-dice-${i}" onchange="calculateEstimatedValue('${day}')">
+                        <option value="4">4-sided</option>
+                        <option value="6" selected>6-sided</option>
+                        <option value="8">8-sided</option>
+                        <option value="10">10-sided</option>
+                        <option value="12">12-sided</option>
+                        <option value="20">20-sided</option>
+                    </select>
+                `;
+
+                dayContainer.appendChild(diceSelector);
+            }
+
+            calculateEstimatedValue(day);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            days.forEach(day => updateNumDice(day));
+            calculateWeekEstimatedValues(); // Initial calculation on page load
+        });
+    </script>
+</body>
+</html>
