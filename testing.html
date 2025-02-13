@@ -64,7 +64,15 @@
         .participants {
             margin: 20px 0;
         }
+        .participant-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
         .participant-card {
+            flex: 1 1 calc(50% - 20px); /* Two cards per row with some margin */
+            max-width: calc(50% - 20px);
             margin: 10px 0;
             padding: 15px;
             border: 1px solid #ccc;
@@ -74,6 +82,12 @@
         }
         .participant-card h3 {
             margin: 0 0 10px 0;
+        }
+        @media (max-width: 600px) {
+            .participant-card {
+                flex: 1 1 100%; /* One card per row on small screens */
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -96,7 +110,7 @@
         </div>
         <div class="participants">
             <h2 class="header">Participants</h2>
-            <div id="participantCards">Loading participants...</div>
+            <div id="participantCards" class="participant-cards">Loading participants...</div>
         </div>
     </div>
     <script>
@@ -137,6 +151,14 @@
                 return new Date(`20${year}-${month}-${day}`).toISOString().split('T')[0];
             }
 
+            function formatDateToMDY(dateStr) {
+                const date = new Date(dateStr);
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const year = date.getFullYear().toString().slice(-2);
+                return `${month}/${day}/${year}`;
+            }
+
             function calculatePoints(participant, rollData) {
                 const startDate = new Date(participant.StartDate);
                 const endDate = participant.EndDate ? new Date(participant.EndDate) : new Date();
@@ -157,7 +179,7 @@
                 participantCards.innerHTML = '';
 
                 participants.forEach(participant => {
-                    const { DisplayName, StartDate, EndDate, Losses } = participant;
+                    const { DisplayName, StartDate, EndDate } = participant;
                     const endDate = EndDate || new Date().toISOString().split('T')[0]; // Use today as end date if still active
                     const points = calculatePoints(participant, rollData);
 
@@ -165,9 +187,8 @@
                     card.classList.add('participant-card');
                     card.innerHTML = `
                         <h3>${DisplayName}</h3>
-                        <p><strong>Start Date:</strong> ${StartDate}</p>
-                        <p><strong>End Date:</strong> ${EndDate || 'Ongoing'}</p>
-                        <p><strong>Number of Losses:</strong> ${Losses}</p>
+                        <p><strong>Start Date:</strong> ${formatDateToMDY(StartDate)}</p>
+                        <p><strong>End Date:</strong> ${EndDate ? formatDateToMDY(EndDate) : 'Ongoing'}</p>
                         <p><strong>Current Points:</strong> ${points}</p>
                     `;
                     participantCards.appendChild(card);
