@@ -100,109 +100,95 @@
         </div>
     </div>
     <script>
-        async function fetchTXTData(url) {
-            const response = await fetch(url);
-            const txtText = await response.text();
-            return txtText;
-        }
-
-        function parseParticipants(txtText) {
-            const rows = txtText.trim().split('\n').slice(1); // Remove header row
-            return rows.map(row => {
-                const [ID, Active, DisplayName, StartDate, EndDate, Losses] = row.split(',').map(item => item.trim());
-                return { 
-                    ID, 
-                    Active: Active === "1", 
-                    DisplayName, 
-                    StartDate: convertDateToISO(StartDate), 
-                    EndDate: EndDate ? convertDateToISO(EndDate) : null, // Handle empty EndDate
-                    Losses: parseInt(Losses) || 0
-                };
-            }).filter(participant => participant.Active);
-        }
-
-        function parseIndexHTML(htmlText) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            const rows = doc.querySelectorAll('#dataRows tr');
-            const data = Array.from(rows).map(row => {
-                const cells = row.querySelectorAll('td');
-                const date = convertDateToISO(cells[0].textContent); // Convert date to ISO format
-                const points = parseInt(cells[5].textContent); // Assuming points are in the 6th column (index 5)
-                return { date, points };
-            });
-            console.log('Parsed data from index.html:', data); // Add logging
-            return data;
-        }
-
-        function convertDateToISO(dateStr) {
-            const [month, day, year] = dateStr.split('/');
-            return new Date(`20${year}-${month}-${day}`).toISOString().split('T')[0];
-        }
-
-        function calculateStreak(startDate, endDate) {
-            const start = new Date(startDate);
-            const end = endDate ? new Date(endDate) : new Date();
-            const diffTime = Math.abs(end - start);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays;
-        }
-
-        function calculateTotals(startDate, endDate, data) {
-            const start = new Date(startDate);
-            const end = endDate ? new Date(endDate) : new Date();
-            let totalPoints = 0;
-
-            data.forEach(({ date, points }) => {
-                const currentDate = new Date(date);
-                if (currentDate >= start && currentDate <= end) {
-                    totalPoints += points;
-                }
-            });
-
-            console.log(`Calculated totals from ${startDate} to ${endDate}:`, { totalPoints }); // Add logging
-            return { totalPoints };
-        }
-
-        function displayParticipants(participants, data) {
-            const participantCards = document.getElementById('participantCards');
-            participantCards.innerHTML = '';
-
-            participants.forEach(participant => {
-                const { DisplayName, StartDate, EndDate, Losses } = participant;
-                const endDate = EndDate || new Date().toISOString().split('T')[0]; // Use today as end date if still active
-                const streak = calculateStreak(StartDate, endDate);
-                const { totalPoints } = calculateTotals(StartDate, endDate, data);
-
-                const card = document.createElement('div');
-                card.classList.add('participant-card');
-                card.innerHTML = `
-                    <h3>${DisplayName}</h3>
-                    <p><strong>Start Date:</strong> ${StartDate}</p>
-                    <p><strong>Streak:</strong> ${streak} days</p>
-                    <p><strong>Number of Losses:</strong> ${Losses}</p>
-                    <p><strong>Current Points:</strong> ${totalPoints}</p>
-                `;
-                participantCards.appendChild(card);
-            });
-        }
-
-        async function populateParticipants() {
-            try {
-                const participantsText = await fetchTXTData('participants.txt');
-                const indexHtmlText = await fetchTXTData('index.html');
-
-                const participants = parseParticipants(participantsText);
-                const data = parseIndexHTML(indexHtmlText);
-
-                displayParticipants(participants, data);
-            } catch (error) {
-                console.error('Error populating participants:', error);
-                document.getElementById('participantCards').innerText = 'Failed to load participants.';
+        document.addEventListener("DOMContentLoaded", function() {
+            async function fetchTXTData(url) {
+                const response = await fetch(url);
+                const txtText = await response.text();
+                return txtText;
             }
-        }
 
-        window.onload = populateParticipants;
+            async function fetchRollData(url) {
+                const response = await fetch(url);
+                const text = await response.text();
+                const lines = text.trim().split("\n").slice(1); // Remove header row
+                return lines.map(line => {
+                    const [date, numberOfDice, diceSides, roll] = line.split(";");
+                    return { date, numberOfDice: parseInt(numberOfDice), diceSides: parseInt(diceSides), roll: parseInt(roll) };
+                });
+            }
+
+            function parseParticipants(txtText) {
+                const rows = txtText.trim().split('\n').slice(1); // Remove header row
+                return rows.map(row => {
+                    const [ID, Active, DisplayName, StartDate, EndDate, Losses] = row.split(',').map(item => item.trim());
+                    return { 
+                        ID, 
+                        Active: Active === "1", 
+                        DisplayName, 
+                        StartDate: convertDateToISO(StartDate), 
+                        EndDate: EndDate ? convertDateToISO(EndDate) : null, // Handle empty EndDate
+                        Losses: parseInt(Losses) || 0
+                    };
+                }).filter(participant => participant.Active);
+            }
+
+            function convertDateToISO(dateStr) {
+                const [month, day, year] = dateStr.split('/');
+                return new Date(`20${year}-${month}-${day}`).toISOString().split('T')[0];
+            }
+
+            function calculatePoints(participant, rollData) {
+                const startDate = new Date(participant.StartDate);
+                const endDate = participant.EndDate ? new Date(participant.EndDate) : new Date();
+
+                const points = rollData.reduce((acc, data) => {
+                    const rollDate = new Date(data.date);
+                    if (rollDate >= startDate && rollDate <= endDate) {
+                        acc += data.numberOfDice * data.diceSides * data.roll;
+                    }
+                    return acc;
+                }, 0);
+
+                return points;
+            }
+
+            function displayParticipants(participants, rollData) {
+                const participantCards = document.getElementById('participantCards');
+                participantCards.innerHTML = '';
+
+                participants.forEach(participant => {
+                    const { DisplayName, StartDate, EndDate, Losses } = participant;
+                    const endDate = EndDate || new Date().toISOString().split('T')[0]; // Use today as end date if still active
+                    const points = calculatePoints(participant, rollData);
+
+                    const card = document.createElement('div');
+                    card.classList.add('participant-card');
+                    card.innerHTML = `
+                        <h3>${DisplayName}</h3>
+                        <p><strong>Start Date:</strong> ${StartDate}</p>
+                        <p><strong>End Date:</strong> ${EndDate || 'Ongoing'}</p>
+                        <p><strong>Number of Losses:</strong> ${Losses}</p>
+                        <p><strong>Current Points:</strong> ${points}</p>
+                    `;
+                    participantCards.appendChild(card);
+                });
+            }
+
+            async function populateParticipants() {
+                try {
+                    const participantsText = await fetchTXTData('participants.txt');
+                    const rollData = await fetchRollData('rollData.txt');
+
+                    const participants = parseParticipants(participantsText);
+                    displayParticipants(participants, rollData);
+                } catch (error) {
+                    console.error('Error populating participants:', error);
+                    document.getElementById('participantCards').innerText = 'Failed to load participants.';
+                }
+            }
+
+            window.onload = populateParticipants;
+        });
     </script>
 </body>
 </html>
