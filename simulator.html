@@ -1,1 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Rolling Runners - Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff; /* Pleasant background color */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-item {
+            padding: 10px 20px;
+            background-color: #444;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .nav-item:hover {
+            background-color: #555;
+        }
+        .title {
+            font-size: 36px;
+            color: #fff;
+            text-align: center;
+        }
+        .content-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center; /* Center the text inside the container */
+        }
+        .header {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .day-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            text-align: left;
+        }
+        .day-header {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .dice-selector {
+            margin-bottom: 10px;
+        }
+        .estimated-value {
+            margin-bottom: 10px;
+        }
+        .week-summary {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-container">
+            <div class="nav-item" onclick="location.href='index.html'">Home</div>
+            <div class="nav-item" onclick="location.href='rules.html'">Rules</div>
+        </div>
+        <div class="title">The Rolling Runners</div>
+        <div class="nav-container">
+            <div class="nav-item" onclick="location.href='about.html'">About</div>
+        </div>
+    </div>
 
+    <div class="content-container">
+        <h2 class="header">Dice Roll Simulator</h2>
+
+        <div id="monday" class="day-container">
+            <div class="day-header">Monday</div>
+            <div class="dice-selector">
+                <label for="monday-dice">Dice Sidedness: </label>
+                <select id="monday-dice" onchange="calculateEstimatedValue('monday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="monday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="tuesday" class="day-container">
+            <div class="day-header">Tuesday</div>
+            <div class="dice-selector">
+                <label for="tuesday-dice">Dice Sidedness: </label>
+                <select id="tuesday-dice" onchange="calculateEstimatedValue('tuesday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="tuesday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="wednesday" class="day-container">
+            <div class="day-header">Wednesday</div>
+            <div class="dice-selector">
+                <label for="wednesday-dice">Dice Sidedness: </label>
+                <select id="wednesday-dice" onchange="calculateEstimatedValue('wednesday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="wednesday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="thursday" class="day-container">
+            <div class="day-header">Thursday</div>
+            <div class="dice-selector">
+                <label for="thursday-dice">Dice Sidedness: </label>
+                <select id="thursday-dice" onchange="calculateEstimatedValue('thursday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="thursday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="friday" class="day-container">
+            <div class="day-header">Friday</div>
+            <div class="dice-selector">
+                <label for="friday-dice">Dice Sidedness: </label>
+                <select id="friday-dice" onchange="calculateEstimatedValue('friday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="friday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="saturday" class="day-container">
+            <div class="day-header">Saturday</div>
+            <div class="dice-selector">
+                <label for="saturday-dice">Dice Sidedness: </label>
+                <select id="saturday-dice" onchange="calculateEstimatedValue('saturday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="saturday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <!-- Repeat for other days -->
+        <div id="sunday" class="day-container">
+            <div class="day-header">Sunday</div>
+            <div class="dice-selector">
+                <label for="sunday-dice">Dice Sidedness: </label>
+                <select id="sunday-dice" onchange="calculateEstimatedValue('sunday')">
+                    <option value="4">4-sided</option>
+                    <option value="6" selected>6-sided</option>
+                    <option value="8">8-sided</option>
+                    <option value="10">10-sided</option>
+                    <option value="12">12-sided</option>
+                    <option value="20">20-sided</option>
+                </select>
+            </div>
+            <div class="estimated-value">
+                <strong>Estimated Value:</strong> <span id="sunday-estimated">3.5</span>
+            </div>
+        </div>
+
+        <div class="week-summary">
+            <div><strong>Estimated Value for the Week:</strong> <span id="week-estimated">24.5</span></div>
+            <div><strong>Estimated Value for Each Day:</strong></div>
+            <ul>
+                <li>Monday: <span id="monday-week-estimated">3.5</span></li>
+                <li>Tuesday: <span id="tuesday-week-estimated">3.5</span></li>
+                <li>Wednesday: <span id="wednesday-week-estimated">3.5</span></li>
+                <li>Thursday: <span id="thursday-week-estimated">3.5</span></li>
+                <li>Friday: <span id="friday-week-estimated">3.5</li>
+                <li>Saturday: <span id="saturday-week-estimated">3.5</span></li>
+                <li>Sunday: <span id="sunday-week-estimated">3.5</span></li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        function calculateEstimatedValue(day) {
+            const diceSelector = document.getElementById(`${day}-dice`);
+            const estimatedValueElement = document.getElementById(`${day}-estimated`);
+            const diceSides = parseInt(diceSelector.value);
+            const estimatedValue = (diceSides + 1) / 2;
+            estimatedValueElement.textContent = estimatedValue.toFixed(1);
+
+            calculateWeekEstimatedValues();
+        }
+
+        function calculateWeekEstimatedValues() {
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            let weekEstimatedValue = 0;
+
+            days.forEach(day => {
+                const estimatedValueElement = document.getElementById(`${day}-estimated`);
+                const dayWeekEstimatedElement = document.getElementById(`${day}-week-estimated`);
+                const estimatedValue = parseFloat(estimatedValueElement.textContent);
+                weekEstimatedValue += estimatedValue;
+                dayWeekEstimatedElement.textContent = estimatedValue.toFixed(1);
+            });
+
+            document.getElementById('week-estimated').textContent = weekEstimatedValue.toFixed(1);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            calculateWeekEstimatedValues(); // Initial calculation on page load
+        });
+    </script>
+</body>
+</html>
