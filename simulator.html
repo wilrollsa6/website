@@ -73,7 +73,8 @@
             margin-bottom: 10px;
         }
         .week-summary {
-            margin-top: 30px;
+            margin-top: 20px;
+            margin-bottom: 20px;
             padding: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -95,6 +96,12 @@
     </div>
 
     <div class="content-container">
+        <div class="week-summary">
+            <div><strong>Estimated Value for the Week:</strong> <span id="week-estimated">24.5</span></div>
+            <div><strong>Minimum Weekly Amount:</strong> <span id="week-minimum">7</span></div>
+            <div><strong>Maximum Weekly Amount:</strong> <span id="week-maximum">140</span></div>
+        </div>
+
         <h2 class="header">Dice Roll Simulator</h2>
 
         <div id="monday" class="day-container">
@@ -228,10 +235,6 @@
                 <strong>Estimated Value:</strong> <span id="sunday-estimated">3.5</span>
             </div>
         </div>
-
-        <div class="week-summary">
-            <div><strong>Estimated Value for the Week:</strong> <span id="week-estimated">24.5</span></div>
-        </div>
     </div>
     <script>
         function calculateEstimatedValue(day) {
@@ -247,14 +250,20 @@
         function calculateWeekEstimatedValues() {
             const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             let weekEstimatedValue = 0;
+            let minWeeklyAmount = Number.MAX_VALUE;
+            let maxWeeklyAmount = Number.MIN_VALUE;
 
             days.forEach(day => {
                 const estimatedValueElement = document.getElementById(`${day}-estimated`);
                 const estimatedValue = parseFloat(estimatedValueElement.textContent);
                 weekEstimatedValue += estimatedValue;
+                minWeeklyAmount = Math.min(minWeeklyAmount, estimatedValue);
+                maxWeeklyAmount = Math.max(maxWeeklyAmount, estimatedValue);
             });
 
             document.getElementById('week-estimated').textContent = weekEstimatedValue.toFixed(1);
+            document.getElementById('week-minimum').textContent = (minWeeklyAmount * 7).toFixed(1); // Minimum weekly amount
+            document.getElementById('week-maximum').textContent = (maxWeeklyAmount * 7).toFixed(1); // Maximum weekly amount
         }
 
         document.addEventListener("DOMContentLoaded", function() {
