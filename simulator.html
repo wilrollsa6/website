@@ -55,6 +55,9 @@
             margin-bottom: 10px;
         }
         .day-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             margin: 20px 0;
             padding: 15px;
             border: 1px solid #ccc;
@@ -109,7 +112,12 @@
         </div>
 
         <div id="monday" class="day-container">
-            <div class="day-header">Monday</div>
+            <div class="day-header">
+                Monday
+                <div class="estimated-value">
+                    <strong>Estimated Value:</strong> <span id="monday-estimated">3.5</span>
+                </div>
+            </div>
             <div class="num-dice">
                 <label for="monday-num-dice">Number of Dice: </label>
                 <input type="text" id="monday-num-dice" value="1" oninput="updateNumDice('monday')">
@@ -126,14 +134,16 @@
                     <option value="20">20-sided</option>
                 </select>
             </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="monday-estimated">3.5</span>
-            </div>
         </div>
 
         <!-- Repeat for other days -->
         <div id="tuesday" class="day-container">
-            <div class="day-header">Tuesday</div>
+            <div class="day-header">
+                Tuesday
+                <div class="estimated-value">
+                    <strong>Estimated Value:</strong> <span id="tuesday-estimated">3.5</span>
+                </div>
+            </div>
             <div class="num-dice">
                 <label for="tuesday-num-dice">Number of Dice: </label>
                 <input type="text" id="tuesday-num-dice" value="1" oninput="updateNumDice('tuesday')">
@@ -150,14 +160,16 @@
                     <option value="20">20-sided</option>
                 </select>
             </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="tuesday-estimated">3.5</span>
-            </div>
         </div>
 
         <!-- Repeat for other days -->
         <div id="wednesday" class="day-container">
-            <div class="day-header">Wednesday</div>
+            <div class="day-header">
+                Wednesday
+                <div class="estimated-value">
+                    <strong>Estimated Value:</strong> <span id="wednesday-estimated">3.5</span>
+                </div>
+            </div>
             <div class="num-dice">
                 <label for="wednesday-num-dice">Number of Dice: </label>
                 <input type="text" id="wednesday-num-dice" value="1" oninput="updateNumDice('wednesday')">
@@ -174,14 +186,16 @@
                     <option value="20">20-sided</option>
                 </select>
             </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="wednesday-estimated">3.5</span>
-            </div>
         </div>
 
         <!-- Repeat for other days -->
         <div id="thursday" class="day-container">
-            <div class="day-header">Thursday</div>
+            <div class="day-header">
+                Thursday
+                <div class="estimated-value">
+                    <strong>Estimated Value:</strong> <span id="thursday-estimated">3.5</span>
+                </div>
+            </div>
             <div class="num-dice">
                 <label for="thursday-num-dice">Number of Dice: </label>
                 <input type="text" id="thursday-num-dice" value="1" oninput="updateNumDice('thursday')">
@@ -198,14 +212,16 @@
                     <option value="20">20-sided</option>
                 </select>
             </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="thursday-estimated">3.5</span>
-            </div>
         </div>
 
         <!-- Repeat for other days -->
         <div id="friday" class="day-container">
-            <div class="day-header">Friday</div>
+            <div class="day-header">
+                Friday
+                <div class="estimated-value">
+                    <strong>Estimated Value:</strong> <span id="friday-estimated">3.5</span>
+                </div>
+            </div>
             <div class="num-dice">
                 <label for="friday-num-dice">Number of Dice: </label>
                 <input type="text" id="friday-num-dice" value="1" oninput="updateNumDice('friday')">
@@ -222,14 +238,16 @@
                     <option value="20">20-sided</option>
                 </select>
             </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="friday-estimated">3.5</span>
-            </div>
         </div>
 
         <!-- Repeat for other days -->
         <div id="saturday" class="day-container">
-            <div class="day-header">Saturday</div>
+            <div class="day-header">
+                Saturday
+                <div class="estimated-value">
+                    <strong>Estimated Value:</strong> <span id="saturday-estimated">3.5</span>
+                </div>
+            </div>
             <div class="num-dice">
                 <label for="saturday-num-dice">Number of Dice: </label>
                 <input type="text" id="saturday-num-dice" value="1" oninput="updateNumDice('saturday')">
@@ -246,14 +264,16 @@
                     <option value="20">20-sided</option>
                 </select>
             </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="saturday-estimated">3.5</span>
-            </div>
         </div>
 
         <!-- Repeat for other days -->
         <div id="sunday" class="day-container">
-            <div class="day-header">Sunday</div>
+            <div class="day-header">
+                Sunday
+                <div class="estimated-value">
+                    <strong>Estimated Value:</strong> <span id="sunday-estimated">3.5</span>
+                </div>
+            </div>
             <div class="num-dice">
                 <label for="sunday-num-dice">Number of Dice: </label>
                 <input type="text" id="sunday-num-dice" value="1" oninput="updateNumDice('sunday')">
@@ -269,9 +289,6 @@
                     <option value="12">12-sided</option>
                     <option value="20">20-sided</option>
                 </select>
-            </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="sunday-estimated">3.5</span>
             </div>
         </div>
     </div>
