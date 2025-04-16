@@ -98,7 +98,6 @@
         td {
             background-color: #f9f9f9; /* Background for table cells */
         }
-        /* Removed background color styles for .info-column and .info-column.hidden */
         .info-column.hidden {
             display: none;
         }
@@ -107,6 +106,12 @@
         }
         .sort-desc::after {
             content: ' ↓'; /* Down arrow */
+        }
+        /* Highlight style for Total Mileage cells */
+        .highlight {
+            background-color: #FFD700; /* Gold color for visibility */
+            color: #000; /* Black text for contrast */
+            font-weight: bold;
         }
         /* Media queries for responsiveness */
         @media (max-width: 768px) {
@@ -126,7 +131,7 @@
 <body>
     <div class="navbar">
         <div class="nav-container">
-            <div class="nav-item" onclick="location.href='rules.html'">Rules</a></div>
+            <div class="nav-item" onclick="location.href='rules.html'">Rules</div>
         </div>
         <div class="title">The Rolling Runners</div>
         <div class="nav-container">
@@ -174,25 +179,8 @@
     </div>
 
     <script>
-        let sortOrder = [true, true, true, true, true, true, true, true];
-        let currentSortColumn = -1;
-
-        function formatDateByMDY(date) {
-            const [month, day, year] = date.split('/');
-            return new Date(`20${year}`, month - 1, day);
-        }
-
-        function formatDate(date) {
-            const month = date.getMonth() + 1; // Months are zero-based
-            const day = date.getDate();
-            const year = date.getFullYear().toString().slice(-2); // Get last two digits of the year
-            return `${month}/${day}/${year}`;
-        }
-
-        function getWeekday(dateString) {
-            const date = new Date(dateString);
-            const options = { weekday: 'long' };
-            return new Intl.DateTimeFormat('en-US', options).format(date);
+        function areAllDiceMaxed(sides, rolls) {
+            return rolls.every((roll, index) => roll === sides[index]);
         }
 
         function addRow(date, weekday, numberOfDice, sides, rolls) {
@@ -225,6 +213,11 @@
             const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
             const totalMileageCell = document.createElement('td');
             totalMileageCell.textContent = totalMileage;
+
+            if (areAllDiceMaxed(sides, rolls)) {
+                totalMileageCell.classList.add('highlight');
+            }
+
             row.appendChild(totalMileageCell);
 
             const points = calculatePoints(sides, rolls);
@@ -241,124 +234,8 @@
 
             tbody.appendChild(row);
 
-            // Update current points
             updateCurrentPoints();
         }
-
-        function calculatePoints(sides, rolls) {
-            return rolls.reduce((acc, roll, index) => acc + (sides[index] * roll), 0);
-        }
-
-        async function fetchTXTData(url) {
-            const response = await fetch(url);
-            const txtText = await response.text();
-            return txtText;
-        }
-
-        function parseTXT(txtText) {
-            const rows = txtText.trim().split('\n').slice(1); // Remove header row
-            return rows.map(row => {
-                const [date, numberOfDice, sides, rolls] = row.split(';');
-                return { 
-                    date, 
-                    numberOfDice: parseInt(numberOfDice), 
-                    sides: sides.split(',').map(Number), 
-                    rolls: rolls.split(',').map(Number)
-                };
-            });
-        }
-
-        async function populateData() {
-            const today = new Date();
-            const todayDate = formatDate(today);
-            const tomorrowDate = formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000));
-
-            const txtText = await fetchTXTData('rollData.txt');
-            const rollData = parseTXT(txtText);
-
-            let todayTotalMileage = 0;
-            let tomorrowTotalMileage = 0;
-            let hasTodayData = false;
-            let hasTomorrowData = false;
-
-            rollData.forEach(({ date, numberOfDice, sides, rolls }) => {
-                const formattedDate = formatDate(formatDateByMDY(date));
-                const weekday = getWeekday(formatDateByMDY(date));
-                addRow(formattedDate, weekday, numberOfDice, sides, rolls);
-
-                const totalMileage = rolls.reduce((acc, roll) => acc + roll, 0);
-                if (formattedDate === todayDate) {
-                    todayTotalMileage += totalMileage;
-                    hasTodayData = true;
-                } else if (formattedDate === tomorrowDate) {
-                    tomorrowTotalMileage += totalMileage;
-                    hasTomorrowData = true;
-                }
-            });
-
-            document.getElementById('todayMileage').textContent = hasTodayData ? `${todayTotalMileage}` : "Pending Roll / Update";
-            document.getElementById('tomorrowMileage').textContent = hasTomorrowData ? `${tomorrowTotalMileage}` : "Pending Roll / Update";
-            updateCurrentPoints();
-        }
-
-        function updateCurrentPoints() {
-            const pointsCells = document.querySelectorAll('td:nth-child(7)');
-            let totalPoints = 0;
-
-            pointsCells.forEach(cell => {
-                totalPoints += parseInt(cell.textContent, 10);
-            });
-
-            document.getElementById('currentPoints').textContent = totalPoints;
-        }
-
-        function toggleInfo() {
-            const elements = document.querySelectorAll('.info-column');
-            elements.forEach(element => {
-                element.classList.toggle('hidden');
-            });
-            const infoButton = document.querySelector('.info-button');
-            if (infoButton.textContent === 'More Info') {
-                infoButton.textContent = 'Less Info';
-            } else {
-                infoButton.textContent = 'More Info';
-            }
-        }
-
-        function sortTable(columnIndex) {
-            const tbody = document.getElementById('dataRows');
-            const rows = Array.from(tbody.rows);
-            const isNumericColumn = [2, 3, 4, 5, 6, 7].includes(columnIndex);
-
-            rows.sort((a, b) => {
-                const aText = a.cells[columnIndex].textContent;
-                const bText = b.cells[columnIndex].textContent;
-
-                if (isNumericColumn) {
-                    return sortOrder[columnIndex] ? bText - aText : aText - bText;
-                } else {
-                    return sortOrder[columnIndex] ? bText.localeCompare(aText) : aText.localeCompare(bText);
-                }
-            });
-
-            sortOrder[columnIndex] = !sortOrder[columnIndex];
-            currentSortColumn = columnIndex;
-
-            rows.forEach(row => tbody.appendChild(row)); // Reattach sorted rows
-            updateHeaderIndicators();
-        }
-
-        function updateHeaderIndicators() {
-            const headers = document.querySelectorAll('th');
-            headers.forEach((header, index) => {
-                header.classList.remove('sort-asc', 'sort-desc');
-                if (index === currentSortColumn) {
-                    header.classList.add(sortOrder[index] ? 'sort-asc' : 'sort-desc');
-                }
-            });
-        }
-
-        window.onload = populateData;
     </script>
 </body>
 </html>
