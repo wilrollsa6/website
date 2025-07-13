@@ -26,10 +26,29 @@
     <canvas id="rollChart"></canvas>
   </div>
   <script>
+    // Robust parser for m/d/yy (or mm/dd/yy)
+    function parseMDYY(str) {
+      const parts = str.split('/');
+      if (parts.length !== 3) return null;
+      let [m, d, y] = parts.map(p => parseInt(p, 10));
+      // Assume 2000+ for yy < 70, else 1900+
+      y += (y < 70 ? 2000 : 1900);
+      const date = new Date(y, m - 1, d);
+      return isNaN(date) ? null : date;
+    }
+
     async function fetchRollData() {
-      const response = await fetch('rollData.txt');
-      const text = await response.text();
-      return text.trim().split('\n');
+      try {
+        const response = await fetch('rollData.txt');
+        if (!response.ok) throw new Error('File not found');
+        const text = await response.text();
+        const lines = text.trim().split('\n');
+        if (lines.length === 0 || (lines.length === 1 && lines[0] === "")) throw new Error('No data found');
+        return lines;
+      } catch (error) {
+        document.getElementById('chart-container').innerHTML = `<div style="color: red; text-align: center;">Could not load data: ${error.message}</div>`;
+        throw error;
+      }
     }
 
     function parseRollData(lines) {
@@ -41,8 +60,8 @@
         const rollColumn = columns[columns.length - 1].trim();
         const values = rollColumn.split(',').map(Number).filter(n => !isNaN(n));
         const sum = values.reduce((a, b) => a + b, 0);
-        const date = new Date(dateStr);
-        if (!isNaN(date)) {
+        const date = parseMDYY(dateStr);
+        if (date && !isNaN(date)) {
           rawRecords.push({ date, sum });
         }
       });
@@ -61,6 +80,7 @@
         case 'week': {
           const week = parseInt(parts[1]);
           // ISO week starts on Monday
+          // Find Monday of this ISO week
           const simple = new Date(year, 0, 1 + (week - 1) * 7);
           const dayOfWeek = simple.getDay();
           const monday = new Date(simple);
@@ -115,6 +135,34 @@
           return periodKey;
         default:
           return periodKey;
+      }
+    }
+
+    function getPeriodKey(date, timespan) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      switch (timespan) {
+        case 'day':
+          return `${year}-${month + 1}-${day}`;
+        case 'week': {
+          // ISO week number
+          const tempDate = new Date(date);
+          tempDate.setHours(0, 0, 0, 0);
+          tempDate.setDate(tempDate.getDate() + 4 - (tempDate.getDay() || 7));
+          const yearStart = new Date(tempDate.getFullYear(), 0, 1);
+          const weekNum = Math.ceil((((tempDate - yearStart) / 86400000) + 1) / 7);
+          return `${year}-W${weekNum}`;
+        }
+        case 'month':
+          return `${year}-${month + 1}`;
+        case 'quarter':
+          const quarter = Math.floor(month / 3) + 1;
+          return `${year}-Q${quarter}`;
+        case 'year':
+          return `${year}`;
+        default:
+          return '';
       }
     }
 
@@ -184,52 +232,57 @@
     let records = [];
 
     async function renderChart(timespan = 'day') {
-      if (records.length === 0) {
-        const lines = await fetchRollData();
-        records = parseRollData(lines);
-      }
-      const { labels, values, completeness } = groupRollData(records, timespan);
+      try {
+        if (records.length === 0) {
+          const lines = await fetchRollData();
+          records = parseRollData(lines);
+        }
+        const { labels, values, completeness } = groupRollData(records, timespan);
 
-      const ctx = document.getElementById('rollChart').getContext('2d');
-      if (chartInstance) chartInstance.destroy();
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: `Mileage (${timespan.charAt(0).toUpperCase() + timespan.slice(1)})`,
-            data: values,
-            borderColor: 'blue',
-            borderWidth: 2,
-            fill: false,
-            pointRadius: 5,
-            pointBackgroundColor: completeness.map(complete => complete ? 'blue' : 'orange'),
-            pointBorderColor: completeness.map(complete => complete ? 'blue' : 'orange')
-          }]
-        },
-        options: {
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const idx = context.dataIndex;
-                  const value = context.dataset.data[idx];
-                  const label = context.chart.data.labels[idx];
-                  if (!completeness[idx]) {
-                    return `${label}: ${value} (Incomplete data for this timeframe)`;
-                  } else {
-                    return `${label}: ${value}`;
+        const ctx = document.getElementById('rollChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: `Mileage (${timespan.charAt(0).toUpperCase() + timespan.slice(1)})`,
+              data: values,
+              borderColor: 'blue',
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 5,
+              pointBackgroundColor: completeness.map(complete => complete ? 'blue' : 'orange'),
+              pointBorderColor: completeness.map(complete => complete ? 'blue' : 'orange')
+            }]
+          },
+          options: {
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const idx = context.dataIndex;
+                    const value = context.dataset.data[idx];
+                    const label = context.chart.data.labels[idx];
+                    if (!completeness[idx]) {
+                      return `${label}: ${value} (Incomplete data for this timeframe)`;
+                    } else {
+                      return `${label}: ${value}`;
+                    }
                   }
                 }
               }
+            },
+            scales: {
+              x: { title: { display: true, text: timespan.charAt(0).toUpperCase() + timespan.slice(1) } },
+              y: { title: { display: true, text: 'Mileage' }, beginAtZero: true }
             }
-          },
-          scales: {
-            x: { title: { display: true, text: timespan.charAt(0).toUpperCase() + timespan.slice(1) } },
-            y: { title: { display: true, text: 'Mileage' }, beginAtZero: true }
           }
-        }
-      });
+        });
+      } catch (e) {
+        // Error message already shown by fetchRollData
+      }
     }
 
     document.getElementById('timespan').addEventListener('change', function() {
