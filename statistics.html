@@ -7,10 +7,21 @@
   <style>
     body { font-family: sans-serif; margin: 2em; }
     #chart-container { width: 100%; max-width: 800px; margin: auto; }
+    #controls { margin-bottom: 2em; text-align: center; }
   </style>
 </head>
 <body>
   <h1>Roll Statistics</h1>
+  <div id="controls">
+    <label for="timespan">Timespan:</label>
+    <select id="timespan">
+      <option value="day">Day</option>
+      <option value="week">Week</option>
+      <option value="month">Month</option>
+      <option value="quarter">Quarter</option>
+      <option value="year">Year</option>
+    </select>
+  </div>
   <div id="chart-container">
     <canvas id="rollChart"></canvas>
   </div>
@@ -22,34 +33,109 @@
     }
 
     function parseRollData(lines) {
-      const dateValueMap = {};
+      const rawRecords = [];
       lines.forEach(line => {
         const columns = line.split(';');
         if (columns.length < 2) return;
-        const date = columns[0].trim();
+        const dateStr = columns[0].trim();
         const rollColumn = columns[columns.length - 1].trim();
         const values = rollColumn.split(',').map(Number).filter(n => !isNaN(n));
         const sum = values.reduce((a, b) => a + b, 0);
-        dateValueMap[date] = (dateValueMap[date] || 0) + sum;
+        // Parse date as MM/DD/YY, fallback for other formats
+        const date = new Date(dateStr);
+        if (!isNaN(date)) {
+          rawRecords.push({ date, sum });
+        }
       });
-      // Sort by date (assuming MM/DD/YY format)
-      const sortedDates = Object.keys(dateValueMap)
-        .sort((a, b) => new Date(a) - new Date(b));
-      const sortedValues = sortedDates.map(date => dateValueMap[date]);
-      return { dates: sortedDates, values: sortedValues };
+      return rawRecords;
     }
 
-    async function renderChart() {
-      const lines = await fetchRollData();
-      const { dates, values } = parseRollData(lines);
+    function getPeriodKey(date, timespan) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      switch (timespan) {
+        case 'day':
+          return `${year}-${month + 1}-${day}`;
+        case 'week': {
+          const firstDayOfYear = new Date(year, 0, 1);
+          const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+          const weekNum = Math.floor((pastDaysOfYear + firstDayOfYear.getDay()) / 7) + 1;
+          return `${year}-W${weekNum}`;
+        }
+        case 'month':
+          return `${year}-${month + 1}`;
+        case 'quarter':
+          const quarter = Math.floor(month / 3) + 1;
+          return `${year}-Q${quarter}`;
+        case 'year':
+          return `${year}`;
+        default:
+          return '';
+      }
+    }
+
+    function groupRollData(records, timespan) {
+      const periodSums = {};
+      records.forEach(({ date, sum }) => {
+        const key = getPeriodKey(date, timespan);
+        periodSums[key] = (periodSums[key] || 0) + sum;
+      });
+      // Sort keys chronologically
+      let keys = Object.keys(periodSums);
+      switch (timespan) {
+        case 'day':
+          keys.sort((a, b) => new Date(a) - new Date(b));
+          break;
+        case 'week':
+          keys.sort((a, b) => {
+            const [ay, aw] = a.split('-W').map(Number);
+            const [by, bw] = b.split('-W').map(Number);
+            return ay !== by ? ay - by : aw - bw;
+          });
+          break;
+        case 'month':
+          keys.sort((a, b) => {
+            const [ay, am] = a.split('-').map(Number);
+            const [by, bm] = b.split('-').map(Number);
+            return ay !== by ? ay - by : am - bm;
+          });
+          break;
+        case 'quarter':
+          keys.sort((a, b) => {
+            const [ay, aq] = a.split('-Q').map(Number);
+            const [by, bq] = b.split('-Q').map(Number);
+            return ay !== by ? ay - by : aq - bq;
+          });
+          break;
+        case 'year':
+          keys.sort((a, b) => Number(a) - Number(b));
+          break;
+      }
+      return {
+        labels: keys,
+        values: keys.map(k => periodSums[k])
+      };
+    }
+
+    let chartInstance = null;
+    let records = [];
+
+    async function renderChart(timespan = 'day') {
+      if (records.length === 0) {
+        const lines = await fetchRollData();
+        records = parseRollData(lines);
+      }
+      const { labels, values } = groupRollData(records, timespan);
 
       const ctx = document.getElementById('rollChart').getContext('2d');
-      new Chart(ctx, {
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: dates,
+          labels: labels,
           datasets: [{
-            label: 'Total Roll Value',
+            label: `Total Roll Value (${timespan.charAt(0).toUpperCase() + timespan.slice(1)})`,
             data: values,
             borderColor: 'blue',
             borderWidth: 2,
@@ -60,12 +146,16 @@
         },
         options: {
           scales: {
-            x: { title: { display: true, text: 'Date' } },
+            x: { title: { display: true, text: timespan.charAt(0).toUpperCase() + timespan.slice(1) } },
             y: { title: { display: true, text: 'Roll Value' }, beginAtZero: true }
           }
         }
       });
     }
+
+    document.getElementById('timespan').addEventListener('change', function() {
+      renderChart(this.value);
+    });
 
     renderChart();
   </script>
