@@ -1,375 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Rolling Runners - Simulator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f8ff; /* Pleasant background color */
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-        .navbar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #333;
-            color: #fff;
-        }
-        .nav-container {
-            display: flex;
-            gap: 10px;
-        }
-        .nav-item {
-            padding: 10px 20px;
-            background-color: #444;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-        }
-        .nav-item:hover {
-            background-color: #555;
-        }
-        .title {
-            font-size: 36px;
-            color: #fff;
-            text-align: center;
-        }
-        .content-container {
-            width: 100%;
-            max-width: 800px;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center; /* Center the text inside the container */
-        }
-        .header {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        .day-container {
-            margin: 20px 0;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #fff;
-            text-align: left;
-        }
-        .day-header {
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-        .dice-selector, .num-dice {
-            margin-bottom: 10px;
-        }
-        .estimated-value {
-            margin-bottom: 10px;
-        }
-        .week-summary {
-            margin-top: 30px;
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #fff;
-            text-align: center;
-        }
-        .error-message {
-            color: red;
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Roll Statistics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    #chart-container { width: 100%; max-width: 800px; margin: auto; }
+    #controls { margin-bottom: 2em; text-align: center; }
+  </style>
 </head>
 <body>
-    <div class="navbar">
-        <div class="nav-container">
-            <div class="nav-item" onclick="location.href='index'">Home</div>
-            <div class="nav-item" onclick="location.href='rules'">Rules</div>
-        </div>
-        <div class="title">The Rolling Runners</div>
-        <div class="nav-container">
-            <div class="nav-item" onclick="location.href='about'">About</div>
-        </div>
-    </div>
+  <h1>Roll Statistics</h1>
+  <div id="controls">
+    <label for="timespan">Timespan:</label>
+    <select id="timespan">
+      <option value="day">Day</option>
+      <option value="week">Week</option>
+      <option value="month">Month</option>
+      <option value="quarter">Quarter</option>
+      <option value="year">Year</option>
+    </select>
+  </div>
+  <div id="chart-container">
+    <canvas id="rollChart"></canvas>
+  </div>
+  <script>
+    // Parse m/d/yy date strings
+    function parseMDYY(str) {
+      const parts = str.split('/');
+      if (parts.length !== 3) return null;
+      let [m, d, y] = parts.map(p => parseInt(p, 10));
+      y += (y < 70 ? 2000 : 1900);
+      const date = new Date(y, m - 1, d);
+      return isNaN(date) ? null : date;
+    }
 
-    <div class="content-container">
-        <h2 class="header">Dice Roll Simulator</h2>
+    function formatMDYY(date) {
+      let m = date.getMonth() + 1;
+      let d = date.getDate();
+      let y = date.getFullYear() % 100;
+      return `${m}/${d}/${y}`;
+    }
 
-        <div class="week-summary">
-            <div><strong>Estimated Value for the Week:</strong> <span id="week-estimated">24.5</span></div>
-            <div><strong>Minimum Weekly Amount:</strong> <span id="week-minimum">7</span></div>
-            <div><strong>Maximum Weekly Amount:</strong> <span id="week-maximum">140</span></div>
-        </div>
+    async function fetchRollData() {
+      try {
+        const response = await fetch('rollData.txt');
+        if (!response.ok) throw new Error('File not found');
+        const text = await response.text();
+        const lines = text.trim().split('\n');
+        if (lines.length === 0 || (lines.length === 1 && lines[0] === "")) throw new Error('No data found');
+        return lines;
+      } catch (error) {
+        document.getElementById('chart-container').innerHTML = `<div style="color: red; text-align: center;">Could not load data: ${error.message}</div>`;
+        throw error;
+      }
+    }
 
-        <div id="monday" class="day-container">
-            <div class="day-header">Monday</div>
-            <div class="num-dice">
-                <label for="monday-num-dice">Number of Dice: </label>
-                <input type="text" id="monday-num-dice" value="1" oninput="updateNumDice('monday')">
-                <div id="monday-error" class="error-message"></div>
-            </div>
-            <div class="dice-selector">
-                <label for="monday-dice-0">Dice Sidedness: </label>
-                <select id="monday-dice-0" onchange="calculateEstimatedValue('monday')">
-                    <option value="4">4-sided</option>
-                    <option value="6" selected>6-sided</option>
-                    <option value="8">8-sided</option>
-                    <option value="10">10-sided</option>
-                    <option value="12">12-sided</option>
-                    <option value="20">20-sided</option>
-                </select>
-            </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="monday-estimated">3.5</span>
-            </div>
-        </div>
+    function parseRollData(lines) {
+      const rawRecords = [];
+      lines.forEach(line => {
+        const columns = line.split(';');
+        if (columns.length < 2) return;
+        const dateStr = columns[0].trim();
+        const rollColumn = columns[columns.length - 1].trim();
+        const values = rollColumn.split(',').map(Number).filter(n => !isNaN(n));
+        const sum = values.reduce((a, b) => a + b, 0);
+        const date = parseMDYY(dateStr);
+        if (date && !isNaN(date)) {
+          rawRecords.push({ date, sum });
+        }
+      });
+      return rawRecords;
+    }
 
-        <!-- Repeat for other days -->
-        <div id="tuesday" class="day-container">
-            <div class="day-header">Tuesday</div>
-            <div class="num-dice">
-                <label for="tuesday-num-dice">Number of Dice: </label>
-                <input type="text" id="tuesday-num-dice" value="1" oninput="updateNumDice('tuesday')">
-                <div id="tuesday-error" class="error-message"></div>
-            </div>
-            <div class="dice-selector">
-                <label for="tuesday-dice-0">Dice Sidedness: </label>
-                <select id="tuesday-dice-0" onchange="calculateEstimatedValue('tuesday')">
-                    <option value="4">4-sided</option>
-                    <option value="6" selected>6-sided</option>
-                    <option value="8">8-sided</option>
-                    <option value="10">10-sided</option>
-                    <option value="12">12-sided</option>
-                    <option value="20">20-sided</option>
-                </select>
-            </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="tuesday-estimated">3.5</span>
-            </div>
-        </div>
+    function getPeriodKey(date, timespan) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      switch (timespan) {
+        case 'day':
+          return `${year}-${month + 1}-${day}`;
+        case 'week': {
+          // Week starts on Sunday
+          const sunday = new Date(date);
+          sunday.setDate(sunday.getDate() - sunday.getDay());
+          const weekYear = sunday.getFullYear();
+          // Week number since first Sunday of the year
+          const jan1 = new Date(weekYear, 0, 1);
+          const firstSunday = new Date(jan1);
+          firstSunday.setDate(jan1.getDate() + (jan1.getDay() === 0 ? 0 : 7 - jan1.getDay()));
+          const weekNum = Math.floor((sunday - firstSunday) / (7 * 24 * 60 * 60 * 1000)) + 1;
+          return `${weekYear}-W${weekNum}`;
+        }
+        case 'month':
+          return `${year}-${month + 1}`;
+        case 'quarter':
+          const quarter = Math.floor(month / 3) + 1;
+          return `${year}-Q${quarter}`;
+        case 'year':
+          return `${year}`;
+        default:
+          return '';
+      }
+    }
 
-        <!-- Repeat for other days -->
-        <div id="wednesday" class="day-container">
-            <div class="day-header">Wednesday</div>
-            <div class="num-dice">
-                <label for="wednesday-num-dice">Number of Dice: </label>
-                <input type="text" id="wednesday-num-dice" value="1" oninput="updateNumDice('wednesday')">
-                <div id="wednesday-error" class="error-message"></div>
-            </div>
-            <div class="dice-selector">
-                <label for="wednesday-dice-0">Dice Sidedness: </label>
-                <select id="wednesday-dice-0" onchange="calculateEstimatedValue('wednesday')">
-                    <option value="4">4-sided</option>
-                    <option value="6" selected>6-sided</option>
-                    <option value="8">8-sided</option>
-                    <option value="10">10-sided</option>
-                    <option value="12">12-sided</option>
-                    <option value="20">20-sided</option>
-                </select>
-            </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="wednesday-estimated">3.5</span>
-            </div>
-        </div>
+    function formatPeriodLabel(periodKey, timespan) {
+      switch (timespan) {
+        case 'day':
+          return periodKey;
+        case 'week':
+          return periodKey;
+        case 'month': {
+          const [year, month] = periodKey.split('-');
+          return `${year}-${month.padStart(2, '0')}`;
+        }
+        case 'quarter':
+          return periodKey;
+        case 'year':
+          return periodKey;
+        default:
+          return periodKey;
+      }
+    }
 
-        <!-- Repeat for other days -->
-        <div id="thursday" class="day-container">
-            <div class="day-header">Thursday</div>
-            <div class="num-dice">
-                <label for="thursday-num-dice">Number of Dice: </label>
-                <input type="text" id="thursday-num-dice" value="1" oninput="updateNumDice('thursday')">
-                <div id="thursday-error" class="error-message"></div>
-            </div>
-            <div class="dice-selector">
-                <label for="thursday-dice-0">Dice Sidedness: </label>
-                <select id="thursday-dice-0" onchange="calculateEstimatedValue('thursday')">
-                    <option value="4">4-sided</option>
-                    <option value="6" selected>6-sided</option>
-                    <option value="8">8-sided</option>
-                    <option value="10">10-sided</option>
-                    <option value="12">12-sided</option>
-                    <option value="20">20-sided</option>
-                </select>
-            </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="thursday-estimated">3.5</span>
-            </div>
-        </div>
+    function groupRollData(records, timespan) {
+      // Group records into periods
+      const periodSums = {};
+      const periodDates = {};
+      records.forEach(({ date, sum }) => {
+        const key = getPeriodKey(date, timespan);
+        periodSums[key] = (periodSums[key] || 0) + sum;
+        periodDates[key] = periodDates[key] || [];
+        periodDates[key].push(date);
+      });
 
-        <!-- Repeat for other days -->
-        <div id="friday" class="day-container">
-            <div class="day-header">Friday</div>
-            <div class="num-dice">
-                <label for="friday-num-dice">Number of Dice: </label>
-                <input type="text" id="friday-num-dice" value="1" oninput="updateNumDice('friday')">
-                <div id="friday-error" class="error-message"></div>
-            </div>
-            <div class="dice-selector">
-                <label for="friday-dice-0">Dice Sidedness: </label>
-                <select id="friday-dice-0" onchange="calculateEstimatedValue('friday')">
-                    <option value="4">4-sided</option>
-                    <option value="6" selected>6-sided</option>
-                    <option value="8">8-sided</option>
-                    <option value="10">10-sided</option>
-                    <option value="12">12-sided</option>
-                    <option value="20">20-sided</option>
-                </select>
-            </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="friday-estimated">3.5</span>
-            </div>
-        </div>
+      // Sort keys chronologically
+      let keys = Object.keys(periodSums);
+      switch (timespan) {
+        case 'day':
+          keys.sort((a, b) => new Date(a) - new Date(b));
+          break;
+        case 'week':
+          keys.sort((a, b) => {
+            const [ay, aw] = a.split('-W').map(Number);
+            const [by, bw] = b.split('-W').map(Number);
+            return ay !== by ? ay - by : aw - bw;
+          });
+          break;
+        case 'month':
+          keys.sort((a, b) => {
+            const [ay, am] = a.split('-').map(Number);
+            const [by, bm] = b.split('-').map(Number);
+            return ay !== by ? ay - by : am - bm;
+          });
+          break;
+        case 'quarter':
+          keys.sort((a, b) => {
+            const [ay, aq] = a.split('-Q').map(Number);
+            const [by, bq] = b.split('-Q').map(Number);
+            return ay !== by ? ay - by : aq - bq;
+          });
+          break;
+        case 'year':
+          keys.sort((a, b) => Number(a) - Number(b));
+          break;
+      }
 
-        <!-- Repeat for other days -->
-        <div id="saturday" class="day-container">
-            <div class="day-header">Saturday</div>
-            <div class="num-dice">
-                <label for="saturday-num-dice">Number of Dice: </label>
-                <input type="text" id="saturday-num-dice" value="1" oninput="updateNumDice('saturday')">
-                <div id="saturday-error" class="error-message"></div>
-            </div>
-            <div class="dice-selector">
-                <label for="saturday-dice-0">Dice Sidedness: </label>
-                <select id="saturday-dice-0" onchange="calculateEstimatedValue('saturday')">
-                    <option value="4">4-sided</option>
-                    <option value="6" selected>6-sided</option>
-                    <option value="8">8-sided</option>
-                    <option value="10">10-sided</option>
-                    <option value="12">12-sided</option>
-                    <option value="20">20-sided</option>
-                </select>
-            </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="saturday-estimated">3.5</span>
-            </div>
-        </div>
-
-        <!-- Repeat for other days -->
-        <div id="sunday" class="day-container">
-            <div class="day-header">Sunday</div>
-            <div class="num-dice">
-                <label for="sunday-num-dice">Number of Dice: </label>
-                <input type="text" id="sunday-num-dice" value="1" oninput="updateNumDice('sunday')">
-                <div id="sunday-error" class="error-message"></div>
-            </div>
-            <div class="dice-selector">
-                <label for="sunday-dice-0">Dice Sidedness: </label>
-                <select id="sunday-dice-0" onchange="calculateEstimatedValue('sunday')">
-                    <option value="4">4-sided</option>
-                    <option value="6" selected>6-sided</option>
-                    <option value="8">8-sided</option>
-                    <option value="10">10-sided</option>
-                    <option value="12">12-sided</option>
-                    <option value="20">20-sided</option>
-                </select>
-            </div>
-            <div class="estimated-value">
-                <strong>Estimated Value:</strong> <span id="sunday-estimated">3.5</span>
-            </div>
-        </div>
-    </div>
-    <script>
-        function calculateEstimatedValue(day) {
-            const numDiceInput = document.getElementById(`${day}-num-dice`);
-            const numDice = parseInt(numDiceInput.value);
-            const errorMessage = document.getElementById(`${day}-error`);
-            
-            if (isNaN(numDice) || numDice < 1) {
-                errorMessage.textContent = "Please enter a valid number of dice.";
-                return;
-            } else {
-                errorMessage.textContent = "";
+      // For completeness: For each period, check if all expected days are present
+      // For week: must have 7 days
+      // For month: all days of the month
+      // For quarter: all days of the three months
+      // For year: all 365/366 days
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const completeness = keys.map(key => {
+        let expectedDates = [];
+        if (timespan === 'week') {
+          // Find the first date in this period
+          const weekMatch = key.match(/^(\d+)-W(\d+)$/);
+          if (!weekMatch) return false;
+          const year = parseInt(weekMatch[1]);
+          const weekNum = parseInt(weekMatch[2]);
+          // Find first Sunday of the year
+          const jan1 = new Date(year, 0, 1);
+          const jan1Day = jan1.getDay();
+          const firstSunday = new Date(jan1);
+          firstSunday.setDate(jan1.getDate() + (jan1Day === 0 ? 0 : 7 - jan1Day));
+          const startDate = new Date(firstSunday);
+          startDate.setDate(startDate.getDate() + (weekNum - 1) * 7);
+          expectedDates = Array.from({ length: 7 }, (_, i) =>
+            new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i)
+          );
+        } else if (timespan === 'month') {
+          const [year, month] = key.split('-').map(Number);
+          const daysInMonth = new Date(year, month, 0).getDate();
+          expectedDates = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month - 1, i + 1));
+        } else if (timespan === 'quarter') {
+          const [year, q] = key.split('-Q').map(Number);
+          const firstMonth = (q - 1) * 3;
+          for (let m = firstMonth; m < firstMonth + 3; m++) {
+            const daysInMonth = new Date(year, m + 1, 0).getDate();
+            for (let d = 1; d <= daysInMonth; d++) {
+              expectedDates.push(new Date(year, m, d));
             }
-
-            let totalEstimatedValue = 0;
-            for (let i = 0; i < numDice; i++) {
-                const diceSelector = document.getElementById(`${day}-dice-${i}`);
-                const diceSides = parseInt(diceSelector.value);
-                const estimatedValue = (diceSides + 1) / 2;
-                totalEstimatedValue += estimatedValue;
+          }
+        } else if (timespan === 'year') {
+          const year = parseInt(key);
+          for (let m = 0; m < 12; m++) {
+            const daysInMonth = new Date(year, m + 1, 0).getDate();
+            for (let d = 1; d <= daysInMonth; d++) {
+              expectedDates.push(new Date(year, m, d));
             }
-
-            const estimatedValueElement = document.getElementById(`${day}-estimated`);
-            estimatedValueElement.textContent = totalEstimatedValue.toFixed(1);
-
-            calculateWeekEstimatedValues();
+          }
+        } else if (timespan === 'day') {
+          // Single date, always complete
+          expectedDates = periodDates[key] || [];
         }
 
-        function calculateWeekEstimatedValues() {
-            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            let weekEstimatedValue = 0;
-            let minWeeklyAmount = 0;
-            let maxWeeklyAmount = 0;
+        // Remove future dates from expectedDates
+        expectedDates = expectedDates.filter(d => d <= today);
 
-            days.forEach(day => {
-                const numDiceInput = document.getElementById(`${day}-num-dice`);
-                const numDice = parseInt(numDiceInput.value);
+        // Check if all expected dates are present in this period
+        const presentDates = (periodDates[key] || []).map(formatMDYY);
+        const expectedDatesStr = expectedDates.map(formatMDYY);
 
-                for (let i = 0; i < numDice; i++) {
-                    const diceSelector = document.getElementById(`${day}-dice-${i}`);
-                    const diceSides = parseInt(diceSelector.value);
-                    const estimatedValueElement = document.getElementById(`${day}-estimated`);
-                    const estimatedValue = parseFloat(estimatedValueElement.textContent) / numDice;
-                    weekEstimatedValue += estimatedValue;
-                    minWeeklyAmount += 1;
-                    maxWeeklyAmount += diceSides;
+        // For periods with no expected dates (i.e., in the future), mark as incomplete
+        if (expectedDatesStr.length === 0) return false;
+
+        // All expected dates must be present in presentDates
+        return expectedDatesStr.every(ed => presentDates.includes(ed));
+      });
+
+      return {
+        labels: keys.map(k => formatPeriodLabel(k, timespan)),
+        values: keys.map(k => periodSums[k]),
+        completeness
+      };
+    }
+
+    let chartInstance = null;
+    let records = [];
+
+    async function renderChart(timespan = 'day') {
+      try {
+        if (records.length === 0) {
+          const lines = await fetchRollData();
+          records = parseRollData(lines);
+        }
+        const { labels, values, completeness } = groupRollData(records, timespan);
+
+        const ctx = document.getElementById('rollChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: `Mileage (${timespan.charAt(0).toUpperCase() + timespan.slice(1)})`,
+              data: values,
+              borderColor: 'blue',
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 5,
+              pointBackgroundColor: completeness.map(complete => complete ? 'blue' : 'orange'),
+              pointBorderColor: completeness.map(complete => complete ? 'blue' : 'orange')
+            }]
+          },
+          options: {
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const idx = context.dataIndex;
+                    const value = context.dataset.data[idx];
+                    const label = context.chart.data.labels[idx];
+                    if (!completeness[idx]) {
+                      return `${label}: ${value} (Incomplete data for this timeframe)`;
+                    } else {
+                      return `${label}: ${value}`;
+                    }
+                  }
                 }
-            });
-
-            document.getElementById('week-estimated').textContent = weekEstimatedValue.toFixed(1);
-            document.getElementById('week-minimum').textContent = (minWeeklyAmount).toFixed(1); // Minimum weekly amount
-            document.getElementById('week-maximum').textContent = (maxWeeklyAmount).toFixed(1); // Maximum weekly amount
-        }
-
-        function updateNumDice(day) {
-            const numDiceInput = document.getElementById(`${day}-num-dice`);
-            const numDice = parseInt(numDiceInput.value);
-            const errorMessage = document.getElementById(`${day}-error`);
-
-            if (isNaN(numDice) || numDice < 1) {
-                errorMessage.textContent = "Please enter a valid number of dice.";
-                return;
-            } else {
-                errorMessage.textContent = "";
+              }
+            },
+            scales: {
+              x: { title: { display: true, text: timespan.charAt(0).toUpperCase() + timespan.slice(1) } },
+              y: { title: { display: true, text: 'Mileage' }, beginAtZero: true }
             }
-
-            const dayContainer = document.getElementById(day);
-            dayContainer.querySelectorAll('.dice-selector').forEach(selector => selector.remove());
-
-            for (let i = 0; i < numDice; i++) {
-                const diceSelector = document.createElement('div');
-                diceSelector.classList.add('dice-selector');
-
-                diceSelector.innerHTML = `
-                    <label for="${day}-dice-${i}">Dice Sidedness: </label>
-                    <select id="${day}-dice-${i}" onchange="calculateEstimatedValue('${day}')">
-                        <option value="4">4-sided</option>
-                        <option value="6" selected>6-sided</option>
-                        <option value="8">8-sided</option>
-                        <option value="10">10-sided</option>
-                        <option value="12">12-sided</option>
-                        <option value="20">20-sided</option>
-                    </select>
-                `;
-
-                dayContainer.appendChild(diceSelector);
-            }
-
-            calculateEstimatedValue(day);
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            days.forEach(day => updateNumDice(day));
-            calculateWeekEstimatedValues(); // Initial calculation on page load
+          }
         });
-    </script>
+      } catch (e) {
+        // Error message already shown by fetchRollData
+      }
+    }
+
+    document.getElementById('timespan').addEventListener('change', function() {
+      renderChart(this.value);
+    });
+
+    renderChart();
+  </script>
 </body>
 </html>
