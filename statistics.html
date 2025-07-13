@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Roll Statistics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    #chart-container { width: 100%; max-width: 800px; margin: auto; }
+  </style>
+</head>
+<body>
+  <h1>Roll Statistics</h1>
+  <div id="chart-container">
+    <canvas id="rollChart"></canvas>
+  </div>
+  <script>
+    async function fetchRollData() {
+      const response = await fetch('rollData.txt');
+      const text = await response.text();
+      return text.trim().split('\n');
+    }
+
+    function parseRollData(lines) {
+      const dateValueMap = {};
+      lines.forEach(line => {
+        const columns = line.split(';');
+        if (columns.length < 2) return;
+        const date = columns[0].trim();
+        const rollColumn = columns[columns.length - 1].trim();
+        const values = rollColumn.split(',').map(Number).filter(n => !isNaN(n));
+        const sum = values.reduce((a, b) => a + b, 0);
+        dateValueMap[date] = (dateValueMap[date] || 0) + sum;
+      });
+      // Sort by date (assuming MM/DD/YY format)
+      const sortedDates = Object.keys(dateValueMap)
+        .sort((a, b) => new Date(a) - new Date(b));
+      const sortedValues = sortedDates.map(date => dateValueMap[date]);
+      return { dates: sortedDates, values: sortedValues };
+    }
+
+    async function renderChart() {
+      const lines = await fetchRollData();
+      const { dates, values } = parseRollData(lines);
+
+      const ctx = document.getElementById('rollChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Total Roll Value',
+            data: values,
+            borderColor: 'blue',
+            borderWidth: 2,
+            fill: false,
+            pointRadius: 3,
+            pointBackgroundColor: 'blue'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Date' } },
+            y: { title: { display: true, text: 'Roll Value' }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    renderChart();
+  </script>
+</body>
+</html>
