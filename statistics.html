@@ -37,6 +37,13 @@
       return isNaN(date) ? null : date;
     }
 
+    function formatMDYY(date) {
+      let m = date.getMonth() + 1;
+      let d = date.getDate();
+      let y = date.getFullYear() % 100;
+      return `${m}/${d}/${y}`;
+    }
+
     async function fetchRollData() {
       try {
         const response = await fetch('rollData.txt');
@@ -169,12 +176,12 @@
     function groupRollData(records, timespan) {
       const periodSums = {};
       const datesByPeriod = {};
-      const allDates = new Set(records.map(r => r.date.toDateString()));
+      const allDates = new Set(records.map(r => formatMDYY(r.date)));
       records.forEach(({ date, sum }) => {
         const key = getPeriodKey(date, timespan);
         periodSums[key] = (periodSums[key] || 0) + sum;
         datesByPeriod[key] = datesByPeriod[key] || new Set();
-        datesByPeriod[key].add(date.toDateString());
+        datesByPeriod[key].add(formatMDYY(date));
       });
 
       // Sort keys chronologically
@@ -214,11 +221,9 @@
       today.setHours(0,0,0,0);
       const completeness = keys.map(key => {
         const expectedDates = getDatesInPeriod(key, timespan);
-        // If any expected date is in the future, this period is incomplete
         const hasFuture = expectedDates.some(d => d > today);
         if (hasFuture) return false;
-        // Otherwise, check if all expected days are present in the data
-        return expectedDates.every(d => allDates.has(d.toDateString()));
+        return expectedDates.every(d => allDates.has(formatMDYY(d)));
       });
 
       return {
