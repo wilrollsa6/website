@@ -44,7 +44,7 @@
         // Parse date as MM/DD/YY, fallback for other formats
         const date = new Date(dateStr);
         if (!isNaN(date)) {
-          rawRecords.push({ date, sum, dateStr });
+          rawRecords.push({ date, sum });
         }
       });
       return rawRecords;
@@ -75,84 +75,12 @@
       }
     }
 
-    // Returns array of all dates in a given period for completeness checking
-    function getDatesInPeriod(periodKey, timespan) {
-      const parts = periodKey.split(/[-WQ]/);
-      const year = parseInt(parts[0]);
-      switch (timespan) {
-        case 'day': {
-          // Only one date
-          const [_, m, d] = periodKey.split('-');
-          return [new Date(year, parseInt(m) - 1, parseInt(d))];
-        }
-        case 'week': {
-          const week = parseInt(parts[1]);
-          const janFirst = new Date(year, 0, 1);
-          const janFirstDay = janFirst.getDay();
-          const startDate = new Date(year, 0, 1 + (week - 1) * 7 - janFirstDay);
-          return Array.from({ length: 7 }, (_, i) => new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i));
-        }
-        case 'month': {
-          const month = parseInt(parts[1]) - 1;
-          const daysInMonth = new Date(year, month + 1, 0).getDate();
-          return Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
-        }
-        case 'quarter': {
-          const quarter = parseInt(parts[1]);
-          const firstMonth = (quarter - 1) * 3;
-          let dates = [];
-          for (let m = firstMonth; m < firstMonth + 3; m++) {
-            const daysInMonth = new Date(year, m + 1, 0).getDate();
-            for (let d = 1; d <= daysInMonth; d++) {
-              dates.push(new Date(year, m, d));
-            }
-          }
-          return dates;
-        }
-        case 'year': {
-          let dates = [];
-          for (let m = 0; m < 12; m++) {
-            const daysInMonth = new Date(year, m + 1, 0).getDate();
-            for (let d = 1; d <= daysInMonth; d++) {
-              dates.push(new Date(year, m, d));
-            }
-          }
-          return dates;
-        }
-        default:
-          return [];
-      }
-    }
-
-    function formatPeriodLabel(periodKey, timespan) {
-      switch (timespan) {
-        case 'day':
-          return periodKey;
-        case 'week':
-          return `${periodKey}`;
-        case 'month': {
-          const [year, month] = periodKey.split('-');
-          return `${year}-${month.padStart(2, '0')}`;
-        }
-        case 'quarter':
-          return periodKey;
-        case 'year':
-          return periodKey;
-        default:
-          return periodKey;
-      }
-    }
-
     function groupRollData(records, timespan) {
       const periodSums = {};
-      const datesByPeriod = {};
       records.forEach(({ date, sum }) => {
         const key = getPeriodKey(date, timespan);
         periodSums[key] = (periodSums[key] || 0) + sum;
-        datesByPeriod[key] = datesByPeriod[key] || new Set();
-        datesByPeriod[key].add(date.toDateString());
       });
-
       // Sort keys chronologically
       let keys = Object.keys(periodSums);
       switch (timespan) {
@@ -184,19 +112,9 @@
           keys.sort((a, b) => Number(a) - Number(b));
           break;
       }
-
-      // Check completeness per period
-      const completeness = keys.map(key => {
-        const expectedDates = getDatesInPeriod(key, timespan).map(d => d.toDateString());
-        const actualDates = datesByPeriod[key] || new Set();
-        // If any expected date is missing, incomplete
-        return expectedDates.every(d => actualDates.has(d));
-      });
-
       return {
-        labels: keys.map(k => formatPeriodLabel(k, timespan)),
-        values: keys.map(k => periodSums[k]),
-        completeness
+        labels: keys,
+        values: keys.map(k => periodSums[k])
       };
     }
 
@@ -208,46 +126,28 @@
         const lines = await fetchRollData();
         records = parseRollData(lines);
       }
-      const { labels, values, completeness } = groupRollData(records, timespan);
+      const { labels, values } = groupRollData(records, timespan);
 
       const ctx = document.getElementById('rollChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
-
       chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
           labels: labels,
           datasets: [{
-            label: `Mileage (${timespan.charAt(0).toUpperCase() + timespan.slice(1)})`,
+            label: `Total Roll Value (${timespan.charAt(0).toUpperCase() + timespan.slice(1)})`,
             data: values,
             borderColor: 'blue',
             borderWidth: 2,
             fill: false,
-            pointRadius: 5,
-            pointBackgroundColor: completeness.map(complete => complete ? 'blue' : 'orange'),
-            pointBorderColor: completeness.map(complete => complete ? 'blue' : 'orange')
+            pointRadius: 3,
+            pointBackgroundColor: 'blue'
           }]
         },
         options: {
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const idx = context.dataIndex;
-                  const value = context.dataset.data[idx];
-                  const label = context.chart.data.labels[idx];
-                  if (!completeness[idx]) {
-                    return `${label}: ${value} (Incomplete data for this timeframe)`;
-                  } else {
-                    return `${label}: ${value}`;
-                  }
-                }
-              }
-            }
-          },
           scales: {
             x: { title: { display: true, text: timespan.charAt(0).toUpperCase() + timespan.slice(1) } },
-            y: { title: { display: true, text: 'Mileage' }, beginAtZero: true }
+            y: { title: { display: true, text: 'Roll Value' }, beginAtZero: true }
           }
         }
       });
