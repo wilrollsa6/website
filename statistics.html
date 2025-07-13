@@ -41,7 +41,6 @@
         const rollColumn = columns[columns.length - 1].trim();
         const values = rollColumn.split(',').map(Number).filter(n => !isNaN(n));
         const sum = values.reduce((a, b) => a + b, 0);
-        // Parse date as MM/DD/YY, fallback for other formats
         const date = new Date(dateStr);
         if (!isNaN(date)) {
           rawRecords.push({ date, sum });
@@ -50,37 +49,86 @@
       return rawRecords;
     }
 
-    function getPeriodKey(date, timespan) {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const day = date.getDate();
+    // Generate all expected dates for a given period key and timespan
+    function getDatesInPeriod(periodKey, timespan) {
+      const parts = periodKey.split(/[-WQ]/);
+      const year = parseInt(parts[0]);
+      switch (timespan) {
+        case 'day': {
+          const [_, m, d] = periodKey.split('-');
+          return [new Date(year, parseInt(m) - 1, parseInt(d))];
+        }
+        case 'week': {
+          const week = parseInt(parts[1]);
+          // ISO week starts on Monday
+          const simple = new Date(year, 0, 1 + (week - 1) * 7);
+          const dayOfWeek = simple.getDay();
+          const monday = new Date(simple);
+          monday.setDate(simple.getDate() - ((dayOfWeek + 6) % 7));
+          return Array.from({ length: 7 }, (_, i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+        }
+        case 'month': {
+          const month = parseInt(parts[1]) - 1;
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          return Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
+        }
+        case 'quarter': {
+          const quarter = parseInt(parts[1]);
+          const firstMonth = (quarter - 1) * 3;
+          let dates = [];
+          for (let m = firstMonth; m < firstMonth + 3; m++) {
+            const daysInMonth = new Date(year, m + 1, 0).getDate();
+            for (let d = 1; d <= daysInMonth; d++) {
+              dates.push(new Date(year, m, d));
+            }
+          }
+          return dates;
+        }
+        case 'year': {
+          let dates = [];
+          for (let m = 0; m < 12; m++) {
+            const daysInMonth = new Date(year, m + 1, 0).getDate();
+            for (let d = 1; d <= daysInMonth; d++) {
+              dates.push(new Date(year, m, d));
+            }
+          }
+          return dates;
+        }
+        default:
+          return [];
+      }
+    }
+
+    function formatPeriodLabel(periodKey, timespan) {
       switch (timespan) {
         case 'day':
-          return `${year}-${month + 1}-${day}`;
-        case 'week': {
-          const firstDayOfYear = new Date(year, 0, 1);
-          const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-          const weekNum = Math.floor((pastDaysOfYear + firstDayOfYear.getDay()) / 7) + 1;
-          return `${year}-W${weekNum}`;
+          return periodKey;
+        case 'week':
+          return periodKey;
+        case 'month': {
+          const [year, month] = periodKey.split('-');
+          return `${year}-${month.padStart(2, '0')}`;
         }
-        case 'month':
-          return `${year}-${month + 1}`;
         case 'quarter':
-          const quarter = Math.floor(month / 3) + 1;
-          return `${year}-Q${quarter}`;
+          return periodKey;
         case 'year':
-          return `${year}`;
+          return periodKey;
         default:
-          return '';
+          return periodKey;
       }
     }
 
     function groupRollData(records, timespan) {
       const periodSums = {};
+      const datesByPeriod = {};
+      const allDates = new Set(records.map(r => r.date.toDateString()));
       records.forEach(({ date, sum }) => {
         const key = getPeriodKey(date, timespan);
         periodSums[key] = (periodSums[key] || 0) + sum;
+        datesByPeriod[key] = datesByPeriod[key] || new Set();
+        datesByPeriod[key].add(date.toDateString());
       });
+
       // Sort keys chronologically
       let keys = Object.keys(periodSums);
       switch (timespan) {
@@ -112,9 +160,23 @@
           keys.sort((a, b) => Number(a) - Number(b));
           break;
       }
+
+      // Compute completeness
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const completeness = keys.map(key => {
+        const expectedDates = getDatesInPeriod(key, timespan);
+        // If any expected date is in the future, this period is incomplete
+        const hasFuture = expectedDates.some(d => d > today);
+        if (hasFuture) return false;
+        // Otherwise, check if all expected days are present in the data
+        return expectedDates.every(d => allDates.has(d.toDateString()));
+      });
+
       return {
-        labels: keys,
-        values: keys.map(k => periodSums[k])
+        labels: keys.map(k => formatPeriodLabel(k, timespan)),
+        values: keys.map(k => periodSums[k]),
+        completeness
       };
     }
 
@@ -126,7 +188,7 @@
         const lines = await fetchRollData();
         records = parseRollData(lines);
       }
-      const { labels, values } = groupRollData(records, timespan);
+      const { labels, values, completeness } = groupRollData(records, timespan);
 
       const ctx = document.getElementById('rollChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
@@ -135,16 +197,33 @@
         data: {
           labels: labels,
           datasets: [{
-            label: `Total Roll Value (${timespan.charAt(0).toUpperCase() + timespan.slice(1)})`,
+            label: `Mileage (${timespan.charAt(0).toUpperCase() + timespan.slice(1)})`,
             data: values,
             borderColor: 'blue',
             borderWidth: 2,
             fill: false,
-            pointRadius: 3,
-            pointBackgroundColor: 'blue'
+            pointRadius: 5,
+            pointBackgroundColor: completeness.map(complete => complete ? 'blue' : 'orange'),
+            pointBorderColor: completeness.map(complete => complete ? 'blue' : 'orange')
           }]
         },
         options: {
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const idx = context.dataIndex;
+                  const value = context.dataset.data[idx];
+                  const label = context.chart.data.labels[idx];
+                  if (!completeness[idx]) {
+                    return `${label}: ${value} (Incomplete data for this timeframe)`;
+                  } else {
+                    return `${label}: ${value}`;
+                  }
+                }
+              }
+            }
+          },
           scales: {
             x: { title: { display: true, text: timespan.charAt(0).toUpperCase() + timespan.slice(1) } },
             y: { title: { display: true, text: 'Mileage' }, beginAtZero: true }
